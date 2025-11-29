@@ -1,0 +1,829 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Ved's 100 First Foods</title>
+  
+   <!-- React & ReactDOM -->
+   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  
+   <!-- Babel -->
+   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+   <!-- Tailwind CSS -->
+   <script src="https://cdn.tailwindcss.com"></script>
+  
+   <script>
+       tailwind.config = {
+           darkMode: 'class',
+           theme: {
+               extend: {
+                   colors: {
+                       dark: {
+                           900: '#000000',
+                           800: '#1c1c1e',
+                           700: '#2c2c2e',
+                           600: '#3a3a3c',
+                       },
+                       light: {
+                           50: '#f9fafb',
+                           100: '#ffffff',
+                           200: '#e5e7eb',
+                           300: '#d1d5db',
+                       },
+                       neon: {
+                           green: '#30db5b',
+                           red: '#ff375f',
+                           orange: '#ff9f0a',
+                           yellow: '#ffd60a',
+                           blue: '#0a84ff',
+                           purple: '#bf5af2',
+                       }
+                   },
+                   fontFamily: {
+                       sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+                       comic: ['Comic Sans MS', 'Chalkboard SE', 'sans-serif'],
+                   }
+               }
+           }
+       }
+   </script>
+  
+   <style>
+       /* Hide scrollbar */
+       .no-scrollbar::-webkit-scrollbar { display: none; }
+       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      
+       body { transition: background-color 0.3s ease, color 0.3s ease; }
+       body.dark-mode { background-color: #000; color: #fff; }
+       body.light-mode { background-color: #f3f4f6; color: #111827; }
+
+
+       /* Animations */
+       @keyframes bounce-in {
+           0% { transform: scale(0.3); opacity: 0; }
+           50% { transform: scale(1.05); }
+           70% { transform: scale(0.9); }
+           100% { transform: scale(1); opacity: 1; }
+       }
+       .animate-bounce-in { animation: bounce-in 0.4s cubic-bezier(0.215, 0.61, 0.355, 1) forwards; }
+
+
+       @keyframes fall {
+           0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+           100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+       }
+       .animate-fall { animation-name: fall; animation-timing-function: linear; animation-fill-mode: forwards; }
+      
+       @keyframes float-cloud {
+           0%, 100% { transform: translateX(0px); }
+           50% { transform: translateX(10px); }
+       }
+       @keyframes sun-spin {
+           0% { transform: rotate(0deg); }
+           100% { transform: rotate(360deg); }
+       }
+      
+       .glass-panel {
+           background: rgba(255, 255, 255, 0.15);
+           backdrop-filter: blur(8px);
+           -webkit-backdrop-filter: blur(8px);
+           border: 1px solid rgba(255, 255, 255, 0.2);
+       }
+       .dark-mode .glass-panel {
+           background: rgba(0, 0, 0, 0.3);
+           border: 1px solid rgba(255, 255, 255, 0.1);
+       }
+      
+       /* Markdown/HTML content styles within modal */
+       .prose h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; margin-top: 1rem; }
+       .prose ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 1rem; }
+       .prose li { margin-bottom: 0.25rem; }
+       .prose p { margin-bottom: 0.75rem; }
+       .prose strong { color: #30db5b; }
+       .light-mode .prose strong { color: #059669; }
+   </style>
+</head>
+<body class="light-mode">
+   <div id="root"></div>
+
+
+   <script type="text/babel">
+       const { useState, useEffect, useMemo } = React;
+       const apiKey = ""; // API Key provided by environment
+
+
+       // --- GEMINI API HELPERS ---
+       const callGemini = async (prompt) => {
+           const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+           const payload = {
+               contents: [{ parts: [{ text: prompt }] }]
+           };
+
+
+           for (let i = 0; i < 3; i++) {
+               try {
+                   const response = await fetch(url, {
+                       method: 'POST',
+                       headers: { 'Content-Type': 'application/json' },
+                       body: JSON.stringify(payload)
+                   });
+                  
+                   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                  
+                   const data = await response.json();
+                   return data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't generate that right now.";
+               } catch (e) {
+                   if (i === 2) return "Sorry, I'm having trouble connecting to the AI chef. Please try again later.";
+                   await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, i)));
+               }
+           }
+       };
+
+
+       // --- Configuration ---
+       const RING_CONFIG = {
+           Veggies: { hue: 135, sat: 70 },
+           Fruits: { hue: 345, sat: 100 },
+           Protein: { hue: 35, sat: 100 },
+           Grains: { hue: 48, sat: 100 },
+           Fats: { hue: 210, sat: 100 },
+           "Herbs/Spices": { hue: 270, sat: 85 }
+       };
+
+
+       const INITIAL_FOOD_DATA = {
+         Veggies: [
+           "Butternut Squash", "Kale", "Spinach", "Cauliflower", "Potatoes",
+           "Sweet Potatoes", "Yams", "Carrots", "Smashed Peas", "Zucchini",
+           "Peppers", "Mushrooms", "Eggplant", "Cucumber", "Parsnips", "Asparagus",
+           "Broccoli", "Green Beans", "Beets", "Creamed Corn", "Pumpkin", "Tomatoes"
+         ],
+         Fruits: [
+           "Bananas", "Apples", "Pineapple", "Pears", "Dates", "Cranberries",
+           "Strawberries", "Papaya", "Raspberries", "Açai", "Kiwis", "Prunes",
+           "Blackberries", "Peaches", "Grapefruit", "Apricots", "Guava",
+           "Cantaloupe", "Figs", "Grapes", "Blueberries", "Plums",
+           "Watermelon", "Cherries", "Dragon Fruit", "Mangos", "Oranges"
+         ],
+         Protein: [
+           "Black Beans", "Navy Beans", "Kidney Beans", "Pinto Beans", "Garbanzo Beans",
+           "Eggs", "Lentils", "Edamame", "Cannellini Beans", "Lima Beans",
+           "Mung Beans", "Black-eyed Peas", "Split Peas", "Adzuki Beans", "Tempeh",
+           "Paneer (Soft Cheese)", "Goat Cheese (Soft)",
+           "Cottage Cheese", "Ricotta Cheese", "Fresh Mozzarella", "Mascarpone",
+           "Regular Yogurt", "Greek Yogurt", "Tofu"
+         ],
+         Grains: [
+           "Oatmeal", "Quinoa", "Barley", "Rice", "Soft Pasta",
+           "Whole Wheat Pancake", "Soft Wheat Bread", "Millet", "Couscous"
+         ],
+         Fats: [
+           "Avocado", "Olive Oil", "Coconut Butter", "Ground Nuts",
+           "Chia Seeds", "Hemp Seeds", "Flax Seeds",
+           "Almond Butter", "Peanut Butter", "Sunflower Butter"
+         ],
+         "Herbs/Spices": [
+           "Garlic", "Basil", "Ginger", "Mint", "Turmeric",
+           "Rosemary", "Nutmeg", "Cilantro", "Cardamom", "Cinnamon"
+         ]
+       };
+
+
+       // --- Icons ---
+       const Icon = ({ name, className, strokeWidth = 2.5 }) => {
+           const icons = {
+               Check: <polyline points="20 6 9 17 4 12" />,
+               Search: <><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></>,
+               PieChart: <path d="M21.21 15.89A10 10 0 1 1 8 2.83" />,
+               Trophy: <><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.66V17" /><path d="M14 14.66V17" /><path d="M12 2v20" /><path d="M12 12a4 4 0 0 0 4-4H8a4 4 0 0 0 4 4z" /></>,
+               Leaf: <><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 1.45 10t-7.37 7z" /><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" /></>,
+               Apple: <><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z" /><path d="M10 2c1 .5 2 2 2 5" /></>,
+               // Restored Original Icons
+               Beef: <><circle cx="12.5" cy="8.5" r="2.5" /><path d="M12.5 2a6.5 6.5 0 0 0-6.22 4.6c-1.1 3.13-.78 6.9 1.48 9.67l1.38 1.38A2 2 0 0 1 9.89 19l-1.26 2.59a2 2 0 0 0 3.01 2.19l1.46-.8a2 2 0 0 1 1.78 0l1.46.8a2 2 0 0 0 3.01-2.19l-1.26-2.59a2 2 0 0 1 .74-1.35l1.38-1.38C22.28 13.5 22.6 9.73 21.5 6.6A6.5 6.5 0 0 0 12.5 2Z" /></>,
+               Wheat: <><path d="M2 22 16 8" /><path d="M3.47 12.53 5 11l1.53 1.53a3.5 3.5 0 0 1 0 4.94L2 22l4.53-4.53a3.5 3.5 0 0 1 4.94 0L13 19l-1.53 1.53" /><path d="M12 8l1.53-1.53a3.5 3.5 0 0 1 4.94 0l4.53-4.53-4.53 4.53a3.5 3.5 0 0 1 0 4.94L16 14l-4-4" /></>,
+               Droplet: <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z" />,
+               Sparkles: <><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L12 3Z" /><path d="M5 3v4" /><path d="M9 5H5" /><path d="M3 7V3" /></>,
+               Filter: <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />,
+               ChevronDown: <path d="m6 9 6 6 6-6" />,
+               ChevronUp: <path d="m18 15-6-6-6 6" />,
+               Sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></>,
+               Moon: <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />,
+               Info: <><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></>,
+               Chef: <><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z"/><path d="M12 12v3"/><path d="M5 15h14"/><path d="M5 15v6h14v-6"/><path d="M12 18v3"/></>,
+               Plus: <path d="M5 12h14M12 5v14" />,
+               X: <><path d="M18 6 6 18"/><path d="m6 6 12 12"/></>
+           };
+           const content = icons[name] || null;
+           return (
+               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
+                   {content}
+               </svg>
+           );
+       };
+
+
+       const CATEGORY_ICONS = {
+         Veggies: <Icon name="Leaf" />,
+         Fruits: <Icon name="Apple" />,
+         Protein: <Icon name="Beef" />,
+         Grains: <Icon name="Wheat" />,
+         Fats: <Icon name="Droplet" />,
+         "Herbs/Spices": <Icon name="Sparkles" />
+       };
+
+
+       // --- Components ---
+       const SceneBackground = ({ timeOfDay }) => {
+           const MorningScene = () => (
+               <div className="absolute inset-0 bg-gradient-to-b from-sky-300 via-sky-200 to-sky-100 transition-all duration-1000">
+                   <div className="absolute top-10 right-10 text-yellow-300 w-24 h-24 opacity-80 animate-pulse" style={{animationDuration: '4s'}}>
+                        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8" /></svg>
+                   </div>
+                   <div className="absolute bottom-0 left-0 w-full h-1/2 bg-green-200/50 rounded-tr-[100%] scale-110 translate-y-4"></div>
+                   <div className="absolute bottom-0 right-0 w-3/4 h-1/3 bg-green-300/40 rounded-tl-[100%] translate-y-2"></div>
+                   <div className="absolute top-1/4 left-1/4 w-16 h-8 bg-white/40 rounded-full blur-md" style={{animation: 'float-cloud 8s ease-in-out infinite alternate'}}></div>
+               </div>
+           );
+           const AfternoonScene = () => (
+               <div className="absolute inset-0 bg-gradient-to-b from-blue-400 via-blue-300 to-amber-100 transition-all duration-1000">
+                    <div className="absolute -top-10 -right-10 w-48 h-48 text-yellow-400 opacity-90" style={{animation: 'sun-spin 60s linear infinite'}}>
+                       <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6" /><path stroke="currentColor" strokeWidth="2" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" /></svg>
+                    </div>
+                    <div className="absolute bottom-0 w-full h-1/4 bg-amber-50/50 blur-xl"></div>
+               </div>
+           );
+           const EveningScene = () => (
+               <div className="absolute inset-0 bg-gradient-to-b from-indigo-500 via-purple-500 to-orange-300 transition-all duration-1000">
+                   <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-orange-500/80 rounded-full blur-lg translate-y-1/2"></div>
+                   <div className="absolute top-1/3 left-10 text-white/20 w-4 h-4">v</div>
+                   <div className="absolute top-1/4 left-20 text-white/20 w-3 h-3">v</div>
+               </div>
+           );
+           const NightScene = () => (
+               <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-800 to-indigo-950 transition-all duration-1000">
+                    <div className="absolute top-8 right-12 w-12 h-12 text-yellow-100/90 drop-shadow-[0_0_10px_rgba(255,255,200,0.5)]"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></div>
+                    {[...Array(15)].map((_, i) => (
+                        <div key={i} className="absolute bg-white rounded-full animate-pulse" style={{top: `${Math.random() * 80}%`, left: `${Math.random() * 100}%`, width: Math.random() > 0.5 ? '2px' : '3px', height: Math.random() > 0.5 ? '2px' : '3px', opacity: Math.random(), animationDuration: `${Math.random() * 2 + 1}s`}} />
+                    ))}
+               </div>
+           );
+           switch(timeOfDay) {
+               case 'morning': return <MorningScene />;
+               case 'afternoon': return <AfternoonScene />;
+               case 'evening': return <EveningScene />;
+               case 'night': return <NightScene />;
+               default: return <MorningScene />;
+           }
+       };
+
+
+       // --- AI Modal Component ---
+       const AIModal = ({ title, content, isOpen, onClose, isLoading, isRecipe }) => {
+           if (!isOpen) return null;
+           return (
+               <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-bounce-in">
+                   <div className="bg-white dark:bg-dark-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+                       <div className={`p-4 flex items-center justify-between border-b ${isRecipe ? 'bg-gradient-to-r from-neon-purple/20 to-neon-blue/20' : 'bg-gradient-to-r from-neon-green/20 to-neon-yellow/20'} dark:border-white/10`}>
+                           <div className="flex items-center gap-2">
+                               <div className={`p-2 rounded-full ${isRecipe ? 'text-neon-purple bg-white dark:bg-dark-900' : 'text-neon-green bg-white dark:bg-dark-900'}`}>
+                                   {isRecipe ? <Icon name="Chef" className="w-5 h-5" /> : <Icon name="Info" className="w-5 h-5" />}
+                               </div>
+                               <h3 className="font-bold text-lg text-gray-900 dark:text-white">{title}</h3>
+                           </div>
+                           <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"><span className="text-2xl">&times;</span></button>
+                       </div>
+                       <div className="p-6 overflow-y-auto prose dark:prose-invert">
+                           {isLoading ? (
+                               <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                                   <div className="w-12 h-12 border-4 border-neon-blue border-t-transparent rounded-full animate-spin"></div>
+                                   <p className="text-gray-500 dark:text-gray-400 font-medium animate-pulse">
+                                       {isRecipe ? "Chef Ved is cooking up an idea..." : "Asking the experts..."}
+                                   </p>
+                               </div>
+                           ) : (
+                               <div dangerouslySetInnerHTML={{ __html: content }} />
+                           )}
+                       </div>
+                       <div className="p-4 border-t bg-gray-50 dark:bg-dark-900/50 dark:border-white/10 text-center">
+                           <p className="text-xs text-gray-400 dark:text-gray-500">
+                               AI-generated advice. Always consult your pediatrician before introducing new foods.
+                           </p>
+                       </div>
+                   </div>
+               </div>
+           );
+       };
+
+
+       // --- Add Food Modal Component ---
+       const AddFoodModal = ({ isOpen, onClose, onAdd, initialName, existingFoods }) => {
+           const [name, setName] = useState(initialName || "");
+           const [category, setCategory] = useState("Veggies");
+           const [duplicateWarning, setDuplicateWarning] = useState(false);
+
+
+           useEffect(() => {
+               if (isOpen && initialName) {
+                   setName(initialName);
+                   setDuplicateWarning(false);
+               }
+           }, [isOpen, initialName]);
+
+
+           if (!isOpen) return null;
+
+
+           const handleSubmit = (e) => {
+               e.preventDefault();
+               if (!name.trim()) return;
+
+
+               // Improved Duplicate Detection (Case insensitive + basic plural check)
+               const cleanName = name.trim().toLowerCase();
+               const isDuplicate = existingFoods.some(food => {
+                   const f = food.toLowerCase();
+                   return f === cleanName || f === cleanName + 's' || f + 's' === cleanName;
+               });
+              
+               if (isDuplicate && !duplicateWarning) {
+                   setDuplicateWarning(true);
+                   return;
+               }
+
+
+               onAdd(name.trim(), category);
+               setName("");
+               setDuplicateWarning(false);
+               onClose();
+           };
+
+
+           return (
+               <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-bounce-in">
+                   <div className="bg-white dark:bg-dark-800 w-full max-w-sm rounded-2xl shadow-2xl p-6">
+                       <div className="flex justify-between items-center mb-4">
+                           <h3 className="font-bold text-lg text-gray-900 dark:text-white">Add Custom Food</h3>
+                           <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
+                               <span className="text-2xl">&times;</span>
+                           </button>
+                       </div>
+                      
+                       {duplicateWarning && (
+                           <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-xl flex items-start gap-3 animate-bounce-in">
+                               <div className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5">
+                                   <Icon name="Info" className="w-5 h-5" />
+                               </div>
+                               <div className="text-sm">
+                                   <p className="font-bold text-yellow-800 dark:text-yellow-200">Already on the list!</p>
+                                   <p className="text-yellow-700 dark:text-yellow-300">"{name}" (or similar) exists. Click 'Add Anyway' if you're sure.</p>
+                               </div>
+                           </div>
+                       )}
+
+
+                       <form onSubmit={handleSubmit} className="space-y-4">
+                           <div>
+                               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Food Name</label>
+                               <input
+                                   type="text"
+                                   value={name}
+                                   onChange={(e) => {
+                                       setName(e.target.value);
+                                       setDuplicateWarning(false);
+                                   }}
+                                   placeholder="e.g. Dragon Fruit"
+                                   className="w-full px-4 py-2 rounded-xl bg-gray-100 dark:bg-dark-700 border-none focus:ring-2 focus:ring-neon-blue dark:text-white"
+                                   autoFocus
+                               />
+                           </div>
+                           <div>
+                               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                               <select
+                                   value={category}
+                                   onChange={(e) => setCategory(e.target.value)}
+                                   className="w-full px-4 py-2 rounded-xl bg-gray-100 dark:bg-dark-700 border-none focus:ring-2 focus:ring-neon-blue dark:text-white"
+                               >
+                                   {Object.keys(INITIAL_FOOD_DATA).map(cat => (
+                                       <option key={cat} value={cat}>{cat}</option>
+                                   ))}
+                               </select>
+                           </div>
+                           <button
+                               type="submit"
+                               className={`w-full font-bold py-3 rounded-xl shadow-lg hover:opacity-90 transition-opacity text-white ${duplicateWarning ? 'bg-yellow-500' : 'bg-gradient-to-r from-neon-blue to-neon-purple'}`}
+                           >
+                               {duplicateWarning ? 'Add Anyway' : 'Add Food'}
+                           </button>
+                       </form>
+                   </div>
+               </div>
+           );
+       };
+
+
+       const Confetti = () => {
+           const colors = ['#30db5b', '#ff375f', '#ff9f0a', '#ffd60a', '#0a84ff', '#bf5af2'];
+           const particles = [...Array(40)].map((_, i) => ({
+               id: i, left: Math.random() * 100, bg: colors[Math.floor(Math.random() * colors.length)], duration: Math.random() * 1.5 + 1, delay: Math.random() * 0.2, size: Math.random() * 6 + 6
+           }));
+           return <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">{particles.map(p => <div key={p.id} className="absolute top-[-20px] animate-fall rounded-full shadow-[0_0_10px_currentColor]" style={{left: `${p.left}%`, backgroundColor: p.bg, color: p.bg, width: `${p.size}px`, height: `${p.size}px`, animationDuration: `${p.duration}s`, animationDelay: `${p.delay}s`}} />)}</div>;
+       };
+
+
+       const CategoryRing = ({ category, progress, total, icon, theme }) => {
+           const radius = 32; const stroke = 5; const normalizedRadius = radius - stroke * 2; const circumference = normalizedRadius * 2 * Math.PI; const percentage = total > 0 ? progress / total : 0; const config = RING_CONFIG[category]; const startLightness = 85; const endLightness = 50; const currentLightness = startLightness - (percentage * (startLightness - endLightness)); const dynamicColor = `hsl(${config.hue}, ${config.sat}%, ${currentLightness}%)`; const trackColor = theme === 'dark' ? '#2c2c2e' : 'rgba(255,255,255,0.3)'; const strokeDashoffset = circumference - (percentage * circumference);
+           return (
+               <div className="flex flex-col items-center gap-2 min-w-[72px] z-10">
+                   <div className="relative flex items-center justify-center">
+                       <svg height={radius * 2} width={radius * 2} className="rotate-[-90deg]">
+                          <circle stroke={trackColor} strokeWidth={stroke} fill="transparent" r={normalizedRadius} cx={radius} cy={radius} />
+                          <circle stroke={dynamicColor} strokeWidth={stroke} strokeDasharray={circumference + ' ' + circumference} style={{ strokeDashoffset, transition: 'stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1), stroke 1s ease' }} strokeLinecap="round" fill="transparent" r={normalizedRadius} cx={radius} cy={radius} />
+                       </svg>
+                       <div className={`absolute inset-0 flex items-center justify-center transition-colors text-white drop-shadow-md`}>{React.cloneElement(icon, { className: "w-5 h-5", strokeWidth: 2.5 })}</div>
+                   </div>
+                   <span className="text-[10px] font-bold uppercase tracking-wider truncate max-w-full text-white/90 drop-shadow-sm">{category === "Herbs/Spices" ? "Herbs" : category}</span>
+                   <span className="text-[10px] font-medium -mt-1 text-white/80">{progress}/{total}</span>
+               </div>
+           );
+       };
+
+
+       function BabyFoodChecklist() {
+         const [checkedItems, setCheckedItems] = useState([]);
+         const [customFoods, setCustomFoods] = useState([]);
+         const [activeCategory, setActiveCategory] = useState("All");
+         const [searchQuery, setSearchQuery] = useState("");
+         const [filterMode, setFilterMode] = useState("All");
+         const [showConfetti, setShowConfetti] = useState(false);
+         const [expandedCategories, setExpandedCategories] = useState(Object.keys(INITIAL_FOOD_DATA).reduce((acc, cat) => ({...acc, [cat]: true}), {}));
+         const [theme, setTheme] = useState('light');
+         const [debugTime, setDebugTime] = useState(null);
+         const [timeOfDay, setTimeOfDay] = useState('morning');
+         const [quickFilters, setQuickFilters] = useState({});
+        
+         const [aiModalOpen, setAiModalOpen] = useState(false);
+         const [aiLoading, setAiLoading] = useState(false);
+         const [aiContent, setAiContent] = useState("");
+         const [aiTitle, setAiTitle] = useState("");
+         const [isRecipeMode, setIsRecipeMode] = useState(false);
+         const [addModalOpen, setAddModalOpen] = useState(false);
+
+
+         // Merge Data
+         const FOOD_DATA = useMemo(() => {
+             const merged = { ...INITIAL_FOOD_DATA };
+             // Deep copy to prevent mutation issues
+             Object.keys(merged).forEach(key => merged[key] = [...merged[key]]);
+            
+             customFoods.forEach(food => {
+                 if (merged[food.category]) {
+                     if (!merged[food.category].includes(food.name)) {
+                         merged[food.category].push(food.name);
+                     }
+                 }
+             });
+             return merged;
+         }, [customFoods]);
+
+
+         useEffect(() => {
+           const saved = localStorage.getItem('babyFoodChecklist_v1');
+           if (saved) { try { setCheckedItems(JSON.parse(saved)); } catch (e) { console.error("Failed to load progress", e); } }
+          
+           const savedCustom = localStorage.getItem('babyFoodChecklist_custom');
+           if (savedCustom) { try { setCustomFoods(JSON.parse(savedCustom)); } catch (e) { console.error("Failed to load custom foods", e); } }
+
+
+           const savedTheme = localStorage.getItem('babyFoodChecklist_theme');
+           if (savedTheme) { setTheme(savedTheme); }
+         }, []);
+
+
+         useEffect(() => {
+               const hour = debugTime !== null ? debugTime : new Date().getHours();
+               if (hour >= 5 && hour < 11) setTimeOfDay('morning');
+               else if (hour >= 11 && hour < 17) setTimeOfDay('afternoon');
+               else if (hour >= 17 && hour < 21) setTimeOfDay('evening');
+               else setTimeOfDay('night');
+         }, [debugTime]);
+
+
+         useEffect(() => { localStorage.setItem('babyFoodChecklist_v1', JSON.stringify(checkedItems)); }, [checkedItems]);
+         useEffect(() => { localStorage.setItem('babyFoodChecklist_custom', JSON.stringify(customFoods)); }, [customFoods]);
+         useEffect(() => { document.body.className = theme === 'dark' ? 'dark-mode' : 'light-mode'; localStorage.setItem('babyFoodChecklist_theme', theme); }, [theme]);
+
+
+         const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+         const toggleItem = (item) => {
+           let newChecked;
+           if (checkedItems.includes(item)) { newChecked = checkedItems.filter(i => i !== item); } else { newChecked = [...checkedItems, item]; setShowConfetti(true); setTimeout(() => setShowConfetti(false), 2000); }
+           setCheckedItems(newChecked);
+         };
+         const toggleCategoryExpand = (cat) => { setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] })); };
+        
+         const toggleQuickFilter = (category) => {
+             setQuickFilters(prev => {
+                 const isActive = prev[category];
+                 return isActive ? {} : { [category]: true };
+             });
+         };
+
+
+         const handleAddCustomFood = (name, category) => {
+             setCustomFoods(prev => [...prev, { name, category }]);
+         };
+
+
+         const handleDeleteCustomFood = (foodName, e) => {
+             e.stopPropagation();
+             if (window.confirm(`Delete custom food "${foodName}"?`)) {
+                 setCustomFoods(prev => prev.filter(f => f.name !== foodName));
+                 setCheckedItems(prev => prev.filter(item => item !== foodName));
+             }
+         };
+
+
+         const handleServingTip = async (foodName, e) => {
+             e.stopPropagation();
+             setAiTitle(`How to serve ${foodName}`);
+             setAiContent("");
+             setIsRecipeMode(false);
+             setAiModalOpen(true);
+             setAiLoading(true);
+
+
+             const prompt = `You are a pediatric nutritionist. Explain how to safely serve '${foodName}' to a baby (6-12 months). Provide 2-3 brief tips (e.g. Texture, Preparation). Use HTML tags like <h3>, <ul>, <li>, <strong> for formatting. Do not use markdown. Keep it friendly and encouraging.`;
+             const response = await callGemini(prompt);
+             setAiContent(response);
+             setAiLoading(false);
+         };
+
+
+         const handleMagicRecipe = async () => {
+             if (checkedItems.length < 2) {
+                 setAiTitle("Not enough foods yet!");
+                 setAiContent("<p>Please check off at least 2 foods you've tried so Chef Ved can invent a recipe!</p>");
+                 setIsRecipeMode(true);
+                 setAiModalOpen(true);
+                 return;
+             }
+
+
+             setAiTitle("Chef Ved's Magic Recipe");
+             setAiContent("");
+             setIsRecipeMode(true);
+             setAiModalOpen(true);
+             setAiLoading(true);
+
+
+             const shuffled = [...checkedItems].sort(() => 0.5 - Math.random());
+             const ingredients = shuffled.slice(0, 3).join(", ");
+
+
+             const prompt = `You are a creative baby chef. Create a simple, tasty baby food recipe using these ingredients: ${ingredients}. You can assume basic pantry staples (water, oil) are available. Give it a fun name. Use HTML tags <h3>, <p>, <ul>, <li>, <strong> for formatting. Do not use markdown.`;
+             const response = await callGemini(prompt);
+             setAiContent(response);
+             setAiLoading(false);
+         };
+
+
+         const totalItems = Object.values(FOOD_DATA).flat().length;
+         const progress = Math.round((checkedItems.length / totalItems) * 100);
+
+
+         const filterItems = (items, categoryName) => {
+           const matchesSearch = items.filter(item => item.toLowerCase().includes(searchQuery.toLowerCase()));
+           const matchesStatus = matchesSearch.filter(item => {
+               if (filterMode === "All") return true;
+               if (filterMode === "Tried") return checkedItems.includes(item);
+               if (filterMode === "To Try") return !checkedItems.includes(item);
+               return true;
+           });
+           const activeFilterKey = Object.keys(quickFilters).find(k => quickFilters[k]);
+           if (activeFilterKey && categoryName !== activeFilterKey) return [];
+          
+           return matchesStatus;
+         };
+
+
+         const renderCategory = (categoryName) => {
+           const items = FOOD_DATA[categoryName];
+           const filteredItems = filterItems(items, categoryName);
+           const activeFilterKey = Object.keys(quickFilters).find(k => quickFilters[k]);
+           const isFiltering = searchQuery || filterMode !== "All" || activeFilterKey;
+          
+           if (filteredItems.length === 0 && isFiltering) return null;
+          
+           const isExpanded = expandedCategories[categoryName];
+           const categoryProgress = items.filter(i => checkedItems.includes(i)).length;
+           const isComplete = categoryProgress === items.length && items.length > 0;
+           const config = RING_CONFIG[categoryName];
+           const headerColorStyle = { color: `hsl(${config.hue}, ${config.sat}%, 50%)`, backgroundColor: `hsla(${config.hue}, ${config.sat}%, 50%, 0.1)` };
+           const cardBg = theme === 'dark' ? 'bg-dark-800 border-white/5 shadow-none' : 'bg-white border-gray-100 shadow-sm';
+           const hoverBg = theme === 'dark' ? 'active:bg-white/5' : 'active:bg-gray-50';
+
+
+           return (
+             <div key={categoryName} className={`mb-4 rounded-2xl overflow-hidden border transition-all duration-300 ${cardBg}`}>
+               <button onClick={() => toggleCategoryExpand(categoryName)} className={`w-full flex items-center justify-between p-4 transition-colors ${hoverBg}`}>
+                 <div className="flex items-center gap-4">
+                   <div className="p-2.5 rounded-xl transition-colors" style={headerColorStyle}>{React.cloneElement(CATEGORY_ICONS[categoryName], { className: "w-5 h-5" })}</div>
+                   <div className="text-left">
+                     <h3 className={`font-bold text-lg leading-tight transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{categoryName}</h3>
+                     <span className="text-xs text-gray-400 font-medium tracking-wide">{categoryProgress} / {items.length} COMPLETED</span>
+                   </div>
+                 </div>
+                 <div className="flex items-center gap-3">
+                    {isComplete && <div className="bg-neon-green/20 text-neon-green p-1.5 rounded-full"><Icon name="Check" className="w-3.5 h-3.5" /></div>}
+                    {isExpanded ? <Icon name="ChevronUp" className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} /> : <Icon name="ChevronDown" className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} />}
+                 </div>
+               </button>
+              
+               {isExpanded && (
+                 <div className="p-3 pt-0 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                   {filteredItems.map(item => {
+                     const isChecked = checkedItems.includes(item);
+                     const isCustom = customFoods.some(f => f.name === item);
+                     const isTriedMode = filterMode === 'Tried';
+                     const btnBase = "group flex items-center justify-between p-3.5 rounded-xl border text-left transition-all duration-300";
+                     let btnState = "", iconState = "", textState = "";
+
+
+                     if (isChecked) {
+                         if (isTriedMode) {
+                             btnState = theme === 'dark' ? 'bg-neon-green/10 border-neon-green/30' : 'bg-green-50 border-green-200';
+                             textState = theme === 'dark' ? 'text-neon-green' : 'text-green-700';
+                             iconState = 'bg-gradient-to-br from-neon-green to-emerald-600 scale-110';
+                         } else {
+                             btnState = theme === 'dark' ? 'bg-dark-700 border-transparent opacity-50' : 'bg-gray-100 border-transparent opacity-60';
+                             textState = 'text-gray-400 line-through';
+                             iconState = 'bg-gradient-to-br from-neon-green to-emerald-600 scale-110';
+                         }
+                     } else {
+                         btnState = theme === 'dark' ? 'bg-dark-700/50 border-transparent hover:bg-dark-600' : 'bg-gray-50 border-transparent hover:bg-white hover:border-gray-200 hover:shadow-sm';
+                         textState = theme === 'dark' ? 'text-gray-200' : 'text-gray-700';
+                         iconState = theme === 'dark' ? 'border-2 border-gray-600 group-hover:border-gray-400' : 'border-2 border-gray-200 group-hover:border-gray-400 bg-white';
+                     }
+
+
+                     return (
+                       <div key={item} onClick={() => toggleItem(item)} className={`${btnBase} ${btnState} cursor-pointer`}>
+                         <div className="flex items-center gap-3">
+                             <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${iconState}`}>
+                               {isChecked && <Icon name="Check" className="w-3 h-3 text-black" strokeWidth={4} />}
+                             </div>
+                             <span className={`font-medium text-sm transition-colors ${textState}`}>{item}</span>
+                         </div>
+                        
+                         <div className="flex gap-1">
+                             {/* AI Tip Button */}
+                             <button
+                               onClick={(e) => handleServingTip(item, e)}
+                               className="p-1.5 text-gray-400 hover:text-neon-blue hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full transition-colors"
+                               title="How to serve?"
+                             >
+                                 <Icon name="Info" className="w-4 h-4" />
+                             </button>
+                            
+                             {/* Delete Custom Food Button */}
+                             {isCustom && (
+                                 <button
+                                   onClick={(e) => handleDeleteCustomFood(item, e)}
+                                   className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors"
+                                   title="Delete Food"
+                                 >
+                                     <Icon name="X" className="w-4 h-4" />
+                                 </button>
+                             )}
+                         </div>
+                       </div>
+                     );
+                   })}
+                 </div>
+               )}
+             </div>
+           );
+         };
+
+
+         const searchBg = theme === 'dark' ? 'bg-dark-700 text-white placeholder-gray-500 focus:ring-white/20' : 'bg-gray-100 text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-gray-300';
+         const filterActive = theme === 'dark' ? 'bg-dark-600 text-white' : 'bg-white text-gray-900 shadow-sm ring-1 ring-black/5';
+         const filterInactive = theme === 'dark' ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700';
+         const filterContainer = theme === 'dark' ? 'bg-dark-700 border-white/5' : 'bg-gray-100 border-transparent';
+
+
+         return (
+           <div className={`min-h-screen pb-24 font-sans selection:bg-neon-green selection:text-black transition-colors`}>
+            
+             <AIModal isOpen={aiModalOpen} onClose={() => setAiModalOpen(false)} title={aiTitle} content={aiContent} isLoading={aiLoading} isRecipe={isRecipeMode} />
+            
+             <AddFoodModal
+               isOpen={addModalOpen}
+               onClose={() => setAddModalOpen(false)}
+               onAdd={handleAddCustomFood}
+               initialName={searchQuery}
+               existingFoods={Object.values(FOOD_DATA).flat()}
+             />
+
+
+             {showConfetti && (
+               <>
+                 <Confetti />
+                 <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none">
+                    <div className={`backdrop-blur-md px-8 py-6 rounded-3xl shadow-2xl border flex flex-col items-center gap-3 animate-bounce-in ${theme === 'dark' ? 'bg-dark-800/90 border-white/10' : 'bg-white/90 border-white/20'}`}>
+                       <div className="text-neon-yellow bg-yellow-400/10 p-4 rounded-full shadow-[0_0_20px_currentColor]"><Icon name="Trophy" className="w-8 h-8" /></div>
+                       <div className="text-center"><h2 className={`font-bold text-xl ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Tasty!</h2><p className="text-gray-400 text-sm">{checkedItems.length} foods down!</p></div>
+                    </div>
+                 </div>
+               </>
+             )}
+
+
+             {/* INTEGRATED HEADER SECTION */}
+             <div className="relative overflow-hidden rounded-b-[2.5rem] shadow-xl z-20">
+               <SceneBackground timeOfDay={timeOfDay} />
+               <div className="relative z-10 w-full h-full bg-gradient-to-b from-black/10 to-black/5 pt-6 pb-8 px-4">
+                  <div className="max-w-xl mx-auto">
+                     <div className="flex items-center justify-between mb-6">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-white/90 bg-black/20 px-2 py-1 rounded-full backdrop-blur-sm">WEDNESDAY, NOV 28</span>
+                            <select onChange={(e) => setDebugTime(parseInt(e.target.value))} className="text-[10px] bg-black/20 border-0 rounded text-white/70 px-1 opacity-0 hover:opacity-100"><option value="">Auto</option><option value="8">Morn</option><option value="13">After</option><option value="18">Eve</option><option value="22">Night</option></select>
+                          </div>
+                          <button onClick={toggleTheme} className="p-2 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/30 transition-colors border border-white/20 shadow-sm">{theme === 'dark' ? <Icon name="Sun" className="w-5 h-5" /> : <Icon name="Moon" className="w-5 h-5" />}</button>
+                     </div>
+                     <div className="flex items-end justify-between mb-8">
+                       <h1 className="text-3xl font-black text-white drop-shadow-md leading-tight max-w-[70%]">Ved's first foods list</h1>
+                       <div className="text-right">
+                            <div className="text-4xl font-black text-white drop-shadow-md leading-none">{checkedItems.length}</div>
+                            <div className="text-[10px] font-bold text-white/80 tracking-widest mt-1">OF {totalItems}</div>
+                       </div>
+                     </div>
+                     <div className="relative h-2 w-full bg-black/20 rounded-full overflow-hidden mb-8 backdrop-blur-sm"><div className="absolute top-0 left-0 h-full w-full bg-white/90 shadow-[0_0_10px_rgba(255,255,255,0.5)]" style={{ width: `${progress}%`, transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} /></div>
+                     <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 mask-linear justify-start sm:justify-between">{Object.keys(FOOD_DATA).map(cat => { const total = FOOD_DATA[cat].length; const current = FOOD_DATA[cat].filter(i => checkedItems.includes(i)).length; return <CategoryRing key={cat} category={cat} progress={current} total={total} icon={CATEGORY_ICONS[cat]} theme={theme} />; })}</div>
+                  </div>
+               </div>
+             </div>
+
+
+             {/* Main Content Area */}
+             <div className="max-w-xl mx-auto px-4 -mt-6 relative z-30">
+               <div className={`rounded-xl p-4 shadow-lg border mb-6 glass-panel transition-all ${theme === 'dark' ? 'bg-dark-800/80 border-white/10' : 'bg-white/80 border-white'}`}>
+                   <div className="flex flex-col gap-3">
+                        <div className="relative flex-grow group w-full">
+                           <div className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${theme === 'dark' ? 'text-gray-500 group-focus-within:text-white' : 'text-gray-400 group-focus-within:text-gray-600'}`}><Icon name="Search" className="w-4 h-4" /></div>
+                           <input type="text" placeholder="Search foods..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className={`w-full pl-10 pr-10 py-2.5 rounded-xl text-sm outline-none ring-1 ring-transparent transition-all ${searchBg}`} />
+                           <button
+                               onClick={() => setAddModalOpen(true)}
+                               className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-neon-blue hover:bg-neon-blue/10 transition-colors"
+                               title="Add custom food"
+                           >
+                               <Icon name="Plus" className="w-5 h-5" />
+                           </button>
+                         </div>
+                         <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+                             <div className="flex gap-2">
+                               {Object.keys(INITIAL_FOOD_DATA).map(cat => (
+                                   <button
+                                       key={cat}
+                                       onClick={() => toggleQuickFilter(cat)}
+                                       className={`p-2 rounded-lg transition-all flex-shrink-0 ${quickFilters[cat] ? 'bg-neon-blue/20 text-neon-blue border-neon-blue/50 border' : (theme === 'dark' ? 'bg-dark-700 text-gray-400 hover:text-white' : 'bg-gray-100 text-gray-500 hover:text-gray-900')}`}
+                                       title={cat}
+                                   >
+                                       {React.cloneElement(CATEGORY_ICONS[cat], { className: "w-5 h-5" })}
+                                   </button>
+                               ))}
+                             </div>
+                             <div className={`flex rounded-xl p-1 border transition-colors ${filterContainer}`}>
+                               {['All', 'To Try', 'Tried'].map(mode => (<button key={mode} onClick={() => setFilterMode(mode)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${filterMode === mode ? filterActive : filterInactive}`}>{mode}</button>))}
+                             </div>
+                         </div>
+                   </div>
+               </div>
+               <div className="space-y-4 pb-24">{Object.keys(FOOD_DATA).map(cat => renderCategory(cat))}</div>
+               {Object.keys(FOOD_DATA).every(cat => filterItems(FOOD_DATA[cat], cat).length === 0) && (<div className="text-center py-20 opacity-50"><div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-500 ${theme === 'dark' ? 'bg-dark-700' : 'bg-gray-100'}`}><Icon name="Search" className="w-8 h-8" /></div><p className="text-gray-400 font-medium">No foods match your search.</p></div>)}
+             </div>
+
+
+             {/* MAGIC RECIPE BUTTON (FAB) */}
+             <button
+               onClick={handleMagicRecipe}
+               className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-neon-purple to-neon-blue text-white p-4 rounded-full shadow-lg hover:shadow-neon-blue/50 hover:scale-105 transition-all active:scale-95 animate-bounce-in"
+               title="Create Magic Recipe"
+             >
+                 <Icon name="Sparkles" className="w-6 h-6" />
+             </button>
+
+
+           </div>
+         );
+       }
+
+
+       const root = ReactDOM.createRoot(document.getElementById('root'));
+       root.render(<BabyFoodChecklist />);
+   </script>
+</body>
+</html>
