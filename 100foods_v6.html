@@ -1,0 +1,1209 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ved's 100 First Foods</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- html2canvas for Image Export -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            900: '#000000',
+                            800: '#1c1c1e',
+                            700: '#2c2c2e',
+                            600: '#3a3a3c',
+                        },
+                        light: {
+                            50: '#f9fafb',
+                            100: '#ffffff',
+                            200: '#e5e7eb',
+                            300: '#d1d5db',
+                        },
+                        neon: {
+                            green: '#30db5b',
+                            red: '#ff375f',
+                            orange: '#ff9f0a',
+                            yellow: '#ffd60a',
+                            blue: '#0a84ff',
+                            purple: '#bf5af2',
+                            teal: '#64d2ff',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+                        comic: ['Comic Sans MS', 'Chalkboard SE', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Hide scrollbar */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        body { transition: background-color 0.3s ease, color 0.3s ease; }
+        body.dark-mode { background-color: #000; color: #fff; }
+        body.light-mode { background-color: #f3f4f6; color: #111827; }
+
+
+        /* Animations */
+        @keyframes bounce-in {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-bounce-in { animation: bounce-in 0.4s cubic-bezier(0.215, 0.61, 0.355, 1) forwards; }
+
+
+        @keyframes fall {
+            0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        .animate-fall { animation-name: fall; animation-timing-function: linear; animation-fill-mode: forwards; }
+        
+        @keyframes float-cloud {
+            0%, 100% { transform: translateX(0px); }
+            50% { transform: translateX(10px); }
+        }
+        @keyframes sun-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .dark-mode .glass-panel {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Markdown/HTML content styles within modal */
+        .prose h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; margin-top: 1rem; }
+        .prose ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 1rem; }
+        .prose li { margin-bottom: 0.25rem; }
+        .prose p { margin-bottom: 0.75rem; }
+        .prose strong { color: #30db5b; }
+        .light-mode .prose strong { color: #059669; }
+        
+        /* Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #30db5b;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #30db5b;
+        }
+        
+        /* Datalist dropdown styling workaround */
+        input::-webkit-calendar-picker-indicator {
+            opacity: 0;
+        }
+
+
+        /* Print/Export Specific Styles */
+        .print-container {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+            width: 1400px; /* Wide format for the chart */
+            background: white;
+            color: black;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+            padding: 40px;
+        }
+        .print-table {
+            width: 100%;
+            border-collapse: separate; 
+            border-spacing: 4px;
+            table-layout: fixed;
+        }
+        .print-table th {
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: 900;
+            text-transform: uppercase;
+            border-radius: 12px;
+            color: white;
+        }
+        .print-table td {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            vertical-align: top;
+            background-color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .print-header {
+            text-align: center;
+            font-size: 56px;
+            font-weight: 900;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #2563eb;
+            text-shadow: 2px 2px 0px #bfdbfe;
+        }
+        .print-subheader {
+            text-align: center;
+            font-size: 24px;
+            color: #6b7280;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="light-mode">
+    <div id="root"></div>
+
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+        const apiKey = ""; 
+
+
+        // --- GEMINI API HELPERS ---
+        const callGemini = async (prompt, userKey, jsonMode = false) => {
+            if (!userKey) {
+                throw new Error("MISSING_KEY");
+            }
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${userKey}`;
+            
+            const generationConfig = jsonMode ? { responseMimeType: "application/json" } : {};
+            
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig
+            };
+
+
+            for (let i = 0; i < 3; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                } catch (e) {
+                    if (i === 2) throw e;
+                    await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, i)));
+                }
+            }
+        };
+
+
+        // --- Configuration ---
+        const RING_CONFIG = { Veggies: { hue: 135, sat: 70 }, Fruits: { hue: 345, sat: 100 }, Protein: { hue: 35, sat: 100 }, Grains: { hue: 48, sat: 100 }, Fats: { hue: 210, sat: 100 }, "Herbs/Spices": { hue: 270, sat: 85 } };
+        const COMMON_ALLERGENS = ["peanut", "nut", "almond", "cashew", "walnut", "pecan", "hazelnut", "pistachio", "macadamia", "egg", "eggs", "milk", "cheese", "yogurt", "dairy", "paneer", "mozzarella", "ricotta", "mascarpone", "soy", "tofu", "tempeh", "edamame", "wheat", "bread", "pasta", "pancake", "couscous", "barley", "rye", "fish", "salmon", "tilapia", "cod", "sole", "scallop", "shellfish", "shrimp", "prawn", "crab", "lobster", "sesame", "tahini", "hummus", "chickpea", "chickpeas", "garbanzo", "lentil", "lentils", "legume"];
+        const INITIAL_FOOD_DATA = { Veggies: ["Butternut Squash", "Kale", "Spinach", "Cauliflower", "Potatoes", "Sweet Potatoes", "Yams", "Carrots", "Smashed Peas", "Zucchini", "Peppers", "Mushrooms", "Eggplant", "Cucumber", "Parsnips", "Asparagus", "Broccoli", "Green Beans", "Beets", "Creamed Corn", "Pumpkin", "Tomatoes"], Fruits: ["Bananas", "Apples", "Pineapple", "Pears", "Dates", "Cranberries", "Strawberries", "Papaya", "Raspberries", "Açai", "Kiwis", "Prunes", "Blackberries", "Peaches", "Grapefruit", "Apricots", "Guava", "Cantaloupe", "Figs", "Grapes", "Blueberries", "Plums", "Watermelon", "Cherries", "Dragon Fruit", "Mangos", "Oranges"], Protein: ["Black Beans", "Navy Beans", "Kidney Beans", "Pinto Beans", "Garbanzo Beans", "Eggs", "Lentils", "Edamame", "Cannellini Beans", "Lima Beans", "Mung Beans", "Black-eyed Peas", "Split Peas", "Adzuki Beans", "Tempeh", "Paneer (Soft Cheese)", "Goat Cheese (Soft)", "Cottage Cheese", "Ricotta Cheese", "Fresh Mozzarella", "Mascarpone", "Regular Yogurt", "Greek Yogurt", "Tofu"], Grains: ["Oatmeal", "Quinoa", "Barley", "Rice", "Soft Pasta", "Whole Wheat Pancake", "Soft Wheat Bread", "Millet", "Couscous"], Fats: ["Avocado", "Olive Oil", "Coconut Butter", "Ground Nuts", "Chia Seeds", "Hemp Seeds", "Flax Seeds", "Almond Butter", "Peanut Butter", "Sunflower Butter"], "Herbs/Spices": ["Garlic", "Basil", "Ginger", "Mint", "Turmeric", "Rosemary", "Nutmeg", "Cilantro", "Cardamom", "Cinnamon"] };
+
+
+        // Emojis for Print View
+        const FOOD_EMOJIS = {
+            "Apple": "🍎", "Banana": "🍌", "Pear": "🍐", "Orange": "🍊", "Mango": "🥭", "Strawberry": "🍓", "Blueberry": "🫐", "Avocado": "🥑", "Carrot": "🥕", "Broccoli": "🥦", "Potato": "🥔", "Corn": "🌽", "Egg": "🥚", "Chicken": "🍗", "Fish": "🐟", "Rice": "🍚", "Bread": "🍞", "Pancake": "🥞", "Cheese": "🧀", "Yogurt": "🥣", "Milk": "🥛", "Peanut": "🥜", "Nut": "🥜", "Spinach": "🍃", "Tomato": "🍅", "Cucumber": "🥒", "Pumpkin": "🎃", "Watermelon": "🍉", "Grape": "🍇", "Oatmeal": "🥣", "Porridge": "🥣", "Soup": "🍲", "Pasta": "🍝", "Squash": "🥣", "Kale": "🥬", "Cauliflower": "🥦", "Peas": "🫛", "Beans": "🫘", "Lentils": "🍲", "Tofu": "🧊", "Hummus": "🥣", "Berry": "🫐", "Cherry": "🍒"
+        };
+
+
+        const getFoodEmoji = (text) => {
+            const lowerText = text.toLowerCase();
+            // Try to find exact matches first
+            for (const [key, emoji] of Object.entries(FOOD_EMOJIS)) {
+                if (lowerText.includes(key.toLowerCase())) return emoji;
+            }
+            return "🍽️"; // Default
+        };
+
+
+        // --- Icons ---
+        const Icon = ({ name, className, strokeWidth = 2.5 }) => {
+            const icons = {
+                Check: <polyline points="20 6 9 17 4 12" />,
+                Search: <><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></>,
+                PieChart: <path d="M21.21 15.89A10 10 0 1 1 8 2.83" />,
+                Trophy: <><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.66V17" /><path d="M14 14.66V17" /><path d="M12 2v20" /><path d="M12 12a4 4 0 0 0 4-4H8a4 4 0 0 0 4 4z" /></>,
+                Leaf: <><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 1.45 10t-7.37 7z" /><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" /></>,
+                Apple: <><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z" /><path d="M10 2c1 .5 2 2 2 5" /></>,
+                Beef: <><circle cx="12.5" cy="8.5" r="2.5" /><path d="M12.5 2a6.5 6.5 0 0 0-6.22 4.6c-1.1 3.13-.78 6.9 1.48 9.67l1.38 1.38A2 2 0 0 1 9.89 19l-1.26 2.59a2 2 0 0 0 3.01 2.19l1.46-.8a2 2 0 0 1 1.78 0l1.46.8a2 2 0 0 0 3.01-2.19l-1.26-2.59a2 2 0 0 1 .74-1.35l1.38-1.38C22.28 13.5 22.6 9.73 21.5 6.6A6.5 6.5 0 0 0 12.5 2Z" /></>,
+                Wheat: <><path d="M2 22 16 8" /><path d="M3.47 12.53 5 11l1.53 1.53a3.5 3.5 0 0 1 0 4.94L2 22l4.53-4.53a3.5 3.5 0 0 1 4.94 0L13 19l-1.53 1.53" /><path d="M12 8l1.53-1.53a3.5 3.5 0 0 1 4.94 0l4.53-4.53-4.53 4.53a3.5 3.5 0 0 1 0 4.94L16 14l-4-4" /></>,
+                Droplet: <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z" />,
+                Sparkles: <><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L12 3Z" /><path d="M5 3v4" /><path d="M9 5H5" /><path d="M3 7V3" /></>,
+                Filter: <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />,
+                ChevronDown: <path d="m6 9 6 6 6-6" />,
+                ChevronUp: <path d="m18 15-6-6-6 6" />,
+                Sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></>,
+                Moon: <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />,
+                Info: <><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></>,
+                Chef: <><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z"/><path d="M12 12v3"/><path d="M5 15h14"/><path d="M5 15v6h14v-6"/><path d="M12 18v3"/></>,
+                Plus: <path d="M5 12h14M12 5v14" />,
+                X: <><path d="M18 6 6 18"/><path d="m6 6 12 12"/></>,
+                Alert: <><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></>,
+                Gear: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z" /></>,
+                List: <><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></>,
+                Calendar: <><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></>,
+                Refresh: <><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" /><path d="M16 21h5v-5" /></>,
+                Edit: <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />,
+                Download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></>,
+                Trash: <><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></>
+            };
+            const content = icons[name] || null;
+            return (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    {content}
+                </svg>
+            );
+        };
+
+
+        const CATEGORY_ICONS = {
+          Veggies: <Icon name="Leaf" />, Fruits: <Icon name="Apple" />, Protein: <Icon name="Beef" />, Grains: <Icon name="Wheat" />, Fats: <Icon name="Droplet" />, "Herbs/Spices": <Icon name="Sparkles" />
+        };
+
+
+        // --- Common Components ---
+        const SceneBackground = ({ timeOfDay }) => {
+            // ... (Same SceneBackground code as before)
+            const MorningScene = () => (<div className="absolute inset-0 bg-gradient-to-b from-sky-300 via-sky-200 to-sky-100 transition-all duration-1000"><div className="absolute top-10 right-10 text-yellow-300 w-24 h-24 opacity-80 animate-pulse" style={{animationDuration: '4s'}}><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8" /></svg></div><div className="absolute bottom-0 left-0 w-full h-1/2 bg-green-200/50 rounded-tr-[100%] scale-110 translate-y-4"></div><div className="absolute bottom-0 right-0 w-3/4 h-1/3 bg-green-300/40 rounded-tl-[100%] translate-y-2"></div><div className="absolute top-1/4 left-1/4 w-16 h-8 bg-white/40 rounded-full blur-md" style={{animation: 'float-cloud 8s ease-in-out infinite alternate'}}></div></div>);
+            const AfternoonScene = () => (<div className="absolute inset-0 bg-gradient-to-b from-blue-400 via-blue-300 to-amber-100 transition-all duration-1000"><div className="absolute -top-10 -right-10 w-48 h-48 text-yellow-400 opacity-90" style={{animation: 'sun-spin 60s linear infinite'}}><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6" /><path stroke="currentColor" strokeWidth="2" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" /></svg></div><div className="absolute bottom-0 w-full h-1/4 bg-amber-50/50 blur-xl"></div></div>);
+            const EveningScene = () => (<div className="absolute inset-0 bg-gradient-to-b from-indigo-500 via-purple-500 to-orange-300 transition-all duration-1000"><div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-orange-500/80 rounded-full blur-lg translate-y-1/2"></div><div className="absolute top-1/3 left-10 text-white/20 w-4 h-4">v</div><div className="absolute top-1/4 left-20 text-white/20 w-3 h-3">v</div></div>);
+            const NightScene = () => (<div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-800 to-indigo-950 transition-all duration-1000"><div className="absolute top-8 right-12 w-12 h-12 text-yellow-100/90 drop-shadow-[0_0_10px_rgba(255,255,200,0.5)]"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></div>{[...Array(15)].map((_, i) => (<div key={i} className="absolute bg-white rounded-full animate-pulse" style={{top: `${Math.random() * 80}%`, left: `${Math.random() * 100}%`, width: Math.random() > 0.5 ? '2px' : '3px', height: Math.random() > 0.5 ? '2px' : '3px', opacity: Math.random(), animationDuration: `${Math.random() * 2 + 1}s`}} />))}</div>);
+            switch(timeOfDay) { case 'morning': return <MorningScene />; case 'afternoon': return <AfternoonScene />; case 'evening': return <EveningScene />; case 'night': return <NightScene />; default: return <MorningScene />; }
+        };
+
+
+        const SettingsModal = ({ isOpen, onClose, apiKey, onSaveKey, onRestoreData }) => {
+            const [keyInput, setKeyInput] = useState(apiKey || "");
+            const fileInputRef = useRef(null);
+
+
+            if (!isOpen) return null;
+
+
+            const handleBackup = () => {
+                const data = {
+                    checkedItems: JSON.parse(localStorage.getItem('babyFoodChecklist_v1') || '[]'),
+                    customFoods: JSON.parse(localStorage.getItem('babyFoodChecklist_custom') || '[]'),
+                    apiKey: keyInput
+                };
+                const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `veds_foods_backup_${new Date().toISOString().slice(0,10)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+
+
+            const handleRestore = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        if (data.checkedItems) localStorage.setItem('babyFoodChecklist_v1', JSON.stringify(data.checkedItems));
+                        if (data.customFoods) localStorage.setItem('babyFoodChecklist_custom', JSON.stringify(data.customFoods));
+                        if (data.apiKey) {
+                            localStorage.setItem('babyFoodChecklist_apiKey', data.apiKey);
+                            setKeyInput(data.apiKey);
+                            onSaveKey(data.apiKey); // Update app state
+                        }
+                        onRestoreData(); // Trigger app refresh
+                        alert("Data restored successfully!");
+                        onClose();
+                    } catch (err) {
+                        alert("Invalid backup file.");
+                    }
+                };
+                reader.readAsText(file);
+            };
+
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-bounce-in">
+                    <div className="bg-white dark:bg-dark-800 w-full max-w-sm rounded-2xl shadow-2xl p-6">
+                        <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-lg text-gray-900 dark:text-white">Settings</h3><button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"><span className="text-2xl">&times;</span></button></div>
+                        
+                        <div className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Google Gemini API Key</label>
+                                <input type="password" value={keyInput} onChange={(e) => setKeyInput(e.target.value)} placeholder="Paste your API key here..." className="w-full px-4 py-2 rounded-xl bg-gray-100 dark:bg-dark-700 border-none focus:ring-2 focus:ring-neon-blue dark:text-white text-sm" />
+                                <button onClick={() => { onSaveKey(keyInput); onClose(); }} className="w-full mt-2 bg-gradient-to-r from-neon-blue to-neon-purple text-white font-bold py-2 rounded-xl shadow-lg hover:opacity-90 transition-opacity">Save Key</button>
+                            </div>
+
+
+                            <div className="border-t border-gray-200 dark:border-white/10 pt-4">
+                                <h4 className="font-bold text-sm text-gray-900 dark:text-white mb-3">Data Management</h4>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button onClick={handleBackup} className="flex items-center justify-center gap-2 py-2 rounded-xl bg-gray-100 dark:bg-dark-700 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-200 dark:hover:bg-dark-600 text-xs">
+                                        <Icon name="Download" className="w-4 h-4" /> Download Backup
+                                    </button>
+                                    <button onClick={() => fileInputRef.current.click()} className="flex items-center justify-center gap-2 py-2 rounded-xl bg-gray-100 dark:bg-dark-700 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-200 dark:hover:bg-dark-600 text-xs">
+                                        <Icon name="Refresh" className="w-4 h-4" /> Restore Data
+                                    </button>
+                                    <input type="file" ref={fileInputRef} onChange={handleRestore} className="hidden" accept=".json" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+
+        const AIModal = ({ title, content, isOpen, onClose, isLoading, isRecipe, isAllergen, error }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-bounce-in">
+                    <div className="bg-white dark:bg-dark-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+                        <div className={`p-4 flex items-center justify-between border-b ${isAllergen ? 'bg-gradient-to-r from-red-500/20 to-orange-500/20 dark:border-red-900/30' : isRecipe ? 'bg-gradient-to-r from-neon-purple/20 to-neon-blue/20 dark:border-white/10' : 'bg-gradient-to-r from-neon-green/20 to-neon-yellow/20 dark:border-white/10'}`}><div className="flex items-center gap-2"><div className={`p-2 rounded-full ${isAllergen ? 'text-red-500 bg-white dark:bg-dark-900' : isRecipe ? 'text-neon-purple bg-white dark:bg-dark-900' : 'text-neon-green bg-white dark:bg-dark-900'}`}>{isAllergen ? <strong className="text-xl px-1">A</strong> : isRecipe ? <Icon name="Chef" className="w-5 h-5" /> : <Icon name="Info" className="w-5 h-5" />}</div><h3 className="font-bold text-lg text-gray-900 dark:text-white">{title}</h3></div><button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"><span className="text-2xl">&times;</span></button></div>
+                        <div className="p-6 overflow-y-auto prose dark:prose-invert text-gray-800 dark:text-gray-200">{isLoading ? (<div className="flex flex-col items-center justify-center py-8 space-y-4"><div className={`w-12 h-12 border-4 border-t-transparent rounded-full animate-spin ${isAllergen ? 'border-red-500' : 'border-neon-blue'}`}></div><p className="text-gray-500 dark:text-gray-400 font-medium animate-pulse">{isAllergen ? "Checking allergen safety info..." : isRecipe ? "Chef Ved is cooking up an idea..." : "Asking the experts..."}</p></div>) : error ? (<div className="text-center py-4"><p className="text-red-500 font-bold mb-2">Connection Error</p><p className="text-sm mb-4">Please make sure you have added your API Key in Settings.</p></div>) : (<div dangerouslySetInnerHTML={{ __html: content }} />)}</div>
+                        <div className="p-4 border-t bg-gray-50 dark:bg-dark-900/50 dark:border-white/10 text-center"><p className="text-xs text-gray-400 dark:text-gray-500">AI-generated advice. Always consult your pediatrician regarding allergens.</p></div>
+                    </div>
+                </div>
+            );
+        };
+
+
+        const AddFoodModal = ({ isOpen, onClose, onAdd, initialName, existingFoods, userKey }) => {
+            const [name, setName] = useState(initialName || "");
+            const [category, setCategory] = useState("Veggies");
+            const [duplicateWarning, setDuplicateWarning] = useState(false);
+            const [loading, setLoading] = useState(false);
+
+
+            useEffect(() => { if (isOpen && initialName) { setName(initialName); setDuplicateWarning(false); } }, [isOpen, initialName]);
+            if (!isOpen) return null;
+
+
+            const checkAllergenWithAI = async (foodName) => {
+                if (!userKey) return false;
+                const prompt = `Is '${foodName}' a common food allergen for babies? Answer ONLY with the word "YES" or "NO". Do not add punctuation.`;
+                try { const result = await callGemini(prompt, userKey); const cleanResult = result.trim().toUpperCase().replace(/[^A-Z]/g, ''); return cleanResult.includes("YES"); } catch (e) { console.error("AI check failed", e); return false; }
+            };
+
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                if (!name.trim()) return;
+                const cleanName = name.trim();
+                const cleanLower = cleanName.toLowerCase();
+                const isDuplicate = existingFoods.some(food => { const f = food.toLowerCase(); return f === cleanLower || f === cleanLower + 's' || f + 's' === cleanLower; });
+                if (isDuplicate && !duplicateWarning) { setDuplicateWarning(true); return; }
+                let isAllergenConfirmed = false;
+                if (userKey) { setLoading(true); isAllergenConfirmed = await checkAllergenWithAI(cleanName); setLoading(false); }
+                onAdd(cleanName, category, isAllergenConfirmed); setName(""); setDuplicateWarning(false); onClose();
+            };
+
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-bounce-in"><div className="bg-white dark:bg-dark-800 w-full max-w-sm rounded-2xl shadow-2xl p-6"><div className="flex justify-between items-center mb-4"><h3 className="font-bold text-lg text-gray-900 dark:text-white">Add Custom Food</h3>{!loading && (<button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"><span className="text-2xl">&times;</span></button>)}</div>{duplicateWarning && !loading && (<div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-xl flex items-start gap-3 animate-bounce-in"><div className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5"><Icon name="Info" className="w-5 h-5" /></div><div className="text-sm"><p className="font-bold text-yellow-800 dark:text-yellow-200">Already on the list!</p><p className="text-yellow-700 dark:text-yellow-300">"{name}" (or similar) exists. Click 'Add Anyway' if you're sure.</p></div></div>)}<form onSubmit={handleSubmit} className="space-y-4"><div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Food Name</label><input type="text" value={name} onChange={(e) => { setName(e.target.value); setDuplicateWarning(false); }} placeholder="e.g. Chickpeas" disabled={loading} className="w-full px-4 py-2 rounded-xl bg-gray-100 dark:bg-dark-700 border-none focus:ring-2 focus:ring-neon-blue dark:text-white disabled:opacity-50" autoFocus /></div><div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label><select value={category} onChange={(e) => setCategory(e.target.value)} disabled={loading} className="w-full px-4 py-2 rounded-xl bg-gray-100 dark:bg-dark-700 border-none focus:ring-2 focus:ring-neon-blue dark:text-white disabled:opacity-50">{Object.keys(INITIAL_FOOD_DATA).map(cat => (<option key={cat} value={cat}>{cat}</option>))}</select></div><button type="submit" disabled={loading} className={`w-full font-bold py-3 rounded-xl shadow-lg hover:opacity-90 transition-opacity text-white flex items-center justify-center gap-2 ${duplicateWarning ? 'bg-yellow-500' : 'bg-gradient-to-r from-neon-blue to-neon-purple'}`}>{loading ? (<><div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin"></div><span>Checking Allergens...</span></>) : (duplicateWarning ? 'Add Anyway' : 'Add Food')}</button></form></div></div>
+            );
+        };
+
+
+        const Confetti = () => {
+            const colors = ['#30db5b', '#ff375f', '#ff9f0a', '#ffd60a', '#0a84ff', '#bf5af2'];
+            const particles = [...Array(40)].map((_, i) => ({ id: i, left: Math.random() * 100, bg: colors[Math.floor(Math.random() * colors.length)], duration: Math.random() * 1.5 + 1, delay: Math.random() * 0.2, size: Math.random() * 6 + 6 }));
+            return <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">{particles.map(p => <div key={p.id} className="absolute top-[-20px] animate-fall rounded-full shadow-[0_0_10px_currentColor]" style={{left: `${p.left}%`, backgroundColor: p.bg, color: p.bg, width: `${p.size}px`, height: `${p.size}px`, animationDuration: `${p.duration}s`, animationDelay: `${p.delay}s`}} />)}</div>;
+        };
+
+
+        const CategoryRing = ({ category, progress, total, icon, theme }) => {
+            const radius = 32; const stroke = 5; const normalizedRadius = radius - stroke * 2; const circumference = normalizedRadius * 2 * Math.PI; const percentage = total > 0 ? progress / total : 0; const config = RING_CONFIG[category]; const startLightness = 85; const endLightness = 50; const currentLightness = startLightness - (percentage * (startLightness - endLightness)); const dynamicColor = `hsl(${config.hue}, ${config.sat}%, ${currentLightness}%)`; const trackColor = theme === 'dark' ? '#2c2c2e' : 'rgba(255,255,255,0.3)'; const strokeDashoffset = circumference - (percentage * circumference);
+            return (
+                <div className="flex flex-col items-center gap-2 min-w-[72px] z-10">
+                    <div className="relative flex items-center justify-center">
+                        <svg height={radius * 2} width={radius * 2} className="rotate-[-90deg]">
+                           <circle stroke={trackColor} strokeWidth={stroke} fill="transparent" r={normalizedRadius} cx={radius} cy={radius} />
+                           <circle stroke={dynamicColor} strokeWidth={stroke} strokeDasharray={circumference + ' ' + circumference} style={{ strokeDashoffset, transition: 'stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1), stroke 1s ease' }} strokeLinecap="round" fill="transparent" r={normalizedRadius} cx={radius} cy={radius} />
+                        </svg>
+                        <div className={`absolute inset-0 flex items-center justify-center transition-colors text-white drop-shadow-md`}>{React.cloneElement(icon, { className: "w-5 h-5", strokeWidth: 2.5 })}</div>
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider truncate max-w-full text-white/90 drop-shadow-sm">{category === "Herbs/Spices" ? "Herbs" : category}</span>
+                    <span className="text-[10px] font-medium -mt-1 text-white/80">{progress}/{total}</span>
+                </div>
+            );
+        };
+
+
+        // --- PRINT VIEW COMPONENT (Hidden until export) ---
+        const PrintView = React.forwardRef(({ plan, days, selectedMeals }, ref) => {
+            if (!plan) return null;
+            
+            return (
+                <div ref={ref} className="print-container p-8 bg-white">
+                    <div className="text-center mb-8">
+                        <h1 className="print-header text-blue-600" style={{fontFamily: 'Comic Sans MS, cursive'}}>VED'S MEAL MISSION!</h1>
+                        <p className="text-gray-500 text-xl">Weekly Adventure Plan</p>
+                    </div>
+                    
+                    <table className="print-table">
+                        <thead>
+                            <tr>
+                                <th style={{width: '100px'}}></th> {/* Corner */}
+                                {Array.from({length: days}).map((_, i) => {
+                                    const dayColors = ['#ef4444', '#f97316', '#ca8a04', '#16a34a', '#2563eb', '#4f46e5', '#9333ea'];
+                                    const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+                                    return (
+                                        <th key={i} style={{color: dayColors[i % 7], fontFamily: 'Comic Sans MS, cursive'}}>
+                                            {dayNames[i % 7]}
+                                        </th>
+                                    );
+                                })}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {selectedMeals.map((meal, rowIdx) => (
+                                <tr key={meal}>
+                                    <td style={{verticalAlign: 'middle', backgroundColor: '#f0f9ff'}}>
+                                        <div className="flex flex-col items-center justify-center h-full">
+                                            {meal.toLowerCase().includes('breakfast') && <div style={{fontSize: '30px'}}>☀️</div>}
+                                            {meal.toLowerCase().includes('dinner') && <div style={{fontSize: '30px'}}>🌙</div>}
+                                            {!meal.toLowerCase().includes('breakfast') && !meal.toLowerCase().includes('dinner') && <div style={{fontSize: '30px'}}>🍽️</div>}
+                                            <div style={{fontWeight: '900', color: '#1e3a8a', textTransform: 'uppercase', marginTop: '5px', fontSize: '14px', writingMode: 'vertical-rl', textOrientation: 'upright'}}>
+                                                {meal}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    {Array.from({length: days}).map((_, i) => {
+                                        const dayKey = `Day ${i+1}`;
+                                        const dish = plan[dayKey]?.[meal] || "";
+                                        const cleanDish = dish.replace(/\*/g, '');
+                                        const emoji = getFoodEmoji(cleanDish);
+                                        
+                                        return (
+                                            <td key={i}>
+                                                <div className="flex flex-col items-center justify-center min-h-[160px]">
+                                                    <div style={{fontSize: '40px', marginBottom: '8px'}}>{emoji}</div>
+                                                    <div style={{fontWeight: 'bold', color: '#1f2937', fontSize: '16px', lineHeight: '1.2', fontFamily: 'Comic Sans MS, cursive'}}>
+                                                        {cleanDish}
+                                                    </div>
+                                                    {dish.includes('*') && (
+                                                        <div style={{marginTop: '8px', fontSize: '10px', backgroundColor: '#dcfce7', color: '#15803d', padding: '2px 6px', borderRadius: '99px', fontWeight: 'bold', textTransform: 'uppercase', border: '1px solid #86efac'}}>
+                                                            New!
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            );
+        });
+
+
+        // --- NEW: MEAL PLANNER COMPONENTS ---
+        const MealPlanner = ({ checkedItems, uncheckedItems, userKey, theme, onOpenSettings, allFoods }) => {
+            const [days, setDays] = useState(7);
+            const [selectedMeals, setSelectedMeals] = useState(["Breakfast", "Lunch", "Dinner"]);
+            const [newIngredientsCount, setNewIngredientsCount] = useState(2);
+            const [allergyTestMode, setAllergyTestMode] = useState(false); 
+            const [mustInclude, setMustInclude] = useState([]); 
+            const [manualRequest, setManualRequest] = useState(""); // New: Manual Request
+            const [plan, setPlan] = useState(null);
+            const [newIngredients, setNewIngredients] = useState([]); 
+            const [planNotes, setPlanNotes] = useState([]); 
+            const [loading, setLoading] = useState(false);
+            const [dragSource, setDragSource] = useState(null);
+            const [activeDish, setActiveDish] = useState(null); 
+            const [dishModalOpen, setDishModalOpen] = useState(false);
+            const [modalLoading, setModalLoading] = useState(false);
+            const [modalContent, setModalContent] = useState("");
+            const [modalTitle, setModalTitle] = useState("");
+            const [modalAction, setModalAction] = useState("");
+            const printRef = useRef(null); 
+
+
+            // Derived Lists for Dropdowns
+            // Filter logic: Only show "must include" foods from the full list
+            const mustIncludeOptions = useMemo(() => {
+                 return allFoods.sort();
+            }, [allFoods]);
+
+
+            const generatePlan = async () => {
+                if (!userKey) {
+                    alert("Please add your API Key in Settings first to generate meal plans.");
+                    onOpenSettings();
+                    return;
+                }
+                setLoading(true);
+                
+                const triedList = checkedItems.length > 0 ? checkedItems.slice(0, 50).join(", ") : "Rice, Oatmeal, Banana"; 
+                const toTryList = uncheckedItems.length > 0 ? uncheckedItems.slice(0, 20).join(", ") : "Avocado, Sweet Potato";
+                
+                const mustIncludeStr = mustInclude.join(", ");
+                
+                // Check if any must-include item is a known allergen and untried
+                const untriedAllergensInMustInclude = mustInclude.filter(item => 
+                    !checkedItems.includes(item) && COMMON_ALLERGENS.some(alg => item.toLowerCase().includes(alg))
+                );
+
+
+                let instruction = "";
+                if (allergyTestMode || untriedAllergensInMustInclude.length > 0) {
+                    instruction = `
+                        - ALLERGY TEST MODE ACTIVE (Triggered manually or by untried allergen in must-include list):
+                        - If a new ingredient is a COMMON ALLERGEN (e.g. peanut, egg, soy, fish, wheat, dairy), REPEAT it for 3 consecutive days in one meal slot.
+                        - Do NOT repeat safe/normal new ingredients for 3 days. Schedule them normally.
+                        - Mark new ingredients with a * in dish names.
+                    `;
+                } else {
+                    instruction = `
+                        - Standard Mode:
+                        - Incorporate EXACTLY ${newIngredientsCount} different new ingredients from the 'To Try' list.
+                        - Schedule new ingredients normally to maximize variety (DO NOT REPEAT across days unless forced).
+                        - Mark new ingredients with a * in the dish name.
+                    `;
+                }
+
+
+                // Add manual request context
+                let manualInstruction = "";
+                if (manualRequest.trim()) {
+                    manualInstruction = `
+                        - **PRIORITY USER REQUEST**: "${manualRequest}"
+                        - Follow this specific request above all other rules (except safety).
+                    `;
+                }
+
+
+                const prompt = `
+                    Create a baby meal plan (JSON format) for ${days} days with these meals: ${selectedMeals.join(", ")}.
+                    
+                    Context:
+                    - Safe foods (Tried): ${triedList}...
+                    - To Try foods: ${toTryList}...
+                    - MUST INCLUDE Foods: ${mustIncludeStr}
+                    ${manualInstruction}
+                    ${instruction}
+                    - Constraint 1: Do not repeat the same main ingredient multiple times in one day (e.g. no squash for lunch AND dinner).
+                    - Constraint 2: Ensure variety across the week. Avoid repeating dishes unless necessary for allergy testing.
+                    - Balance nutrients.
+                    
+                    OUTPUT FORMAT: A single JSON object with three keys:
+                      1. "plan": object where keys are "Day 1", "Day 2" etc. and values are objects with keys "${selectedMeals.join('", "')}".
+                      2. "newIngredients": array of strings listing just the new ingredients used.
+                      3. "notes": array of strings explaining any deviations.
+                    - Example: {"plan": {"Day 1": {"Breakfast": "Oatmeal with Apple"}}, "newIngredients": ["Apple"], "notes": []}
+                    - NO markdown. ONLY JSON.
+                `;
+
+
+                try {
+                    const text = await callGemini(prompt, userKey, true);
+                    const json = JSON.parse(text);
+                    
+                    setPlan(json.plan);
+                    setNewIngredients(json.newIngredients || []);
+                    setPlanNotes(json.notes || []);
+                } catch (e) {
+                    console.error(e);
+                    alert("Failed to generate plan. Please check API Key or try again.");
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+
+            const exportAsImage = async () => {
+                if (printRef.current) {
+                    try {
+                        const canvas = await html2canvas(printRef.current, {
+                            scale: 2, // Retina quality
+                            useCORS: true,
+                            backgroundColor: '#ffffff', // Force white background
+                            windowWidth: 1450 // Ensure layout fits
+                        });
+                        const link = document.createElement('a');
+                        link.download = `Veds_Meal_Mission.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                    } catch (e) {
+                        console.error("Export failed", e);
+                        alert("Could not save image. Please try again.");
+                    }
+                }
+            };
+
+
+            // Drag & Drop Logic
+            const handleDragStart = (e, day, meal) => { setDragSource({ day, meal }); e.dataTransfer.effectAllowed = "move"; };
+            const handleDrop = (e, targetDay, targetMeal) => { 
+                e.preventDefault(); 
+                if (!dragSource) return; 
+                const newPlan = { ...plan }; 
+                const sourceDish = newPlan[dragSource.day][dragSource.meal]; 
+                const targetDish = newPlan[targetDay][targetMeal]; 
+                newPlan[targetDay][targetMeal] = sourceDish; 
+                newPlan[dragSource.day][dragSource.meal] = targetDish; 
+                setPlan(newPlan); 
+                setDragSource(null); 
+            };
+            const handleDragOver = (e) => { e.preventDefault(); };
+            
+            const getCleanDishName = (name) => name.replace(/\*/g, '').trim();
+            const isNewDish = (name) => name.includes('*');
+
+
+            // Dish Actions
+            const handleDishClick = (dish, day, meal) => { setActiveDish({ name: getCleanDishName(dish), rawName: dish, day, meal }); setDishModalOpen(true); setModalContent(""); setModalTitle(getCleanDishName(dish)); setModalAction("view"); };
+            const fetchRecipe = async () => { if (!userKey) { alert("Please add your API Key."); onOpenSettings(); return; } setModalLoading(true); const prompt = `Recipe for baby food: "${activeDish.name}". Keep it simple, healthy. HTML format.`; try { const res = await callGemini(prompt, userKey); setModalContent(res); } catch(e) { setModalContent("Error."); } setModalLoading(false); };
+            const replaceDish = async () => { if (!userKey) { alert("Add API Key."); onOpenSettings(); return; } setModalLoading(true); const prompt = `Suggest replacement baby meal for "${activeDish.name}". Return dish name only.`; try { const res = await callGemini(prompt, userKey); const newName = res.replace(/["*]/g, "").trim(); const newPlan = { ...plan }; newPlan[activeDish.day][activeDish.meal] = newName; setPlan(newPlan); setActiveDish({...activeDish, name: newName, rawName: newName}); setModalTitle(newName); setModalContent("<p>Replaced!</p>"); } catch(e) { setModalContent("Error."); } setModalLoading(false); };
+            const modifyDish = async (instr) => { if (!userKey) { alert("Add API Key."); onOpenSettings(); return; } setModalLoading(true); const prompt = `Modify baby dish "${activeDish.name}": "${instr}". Return new dish name only.`; try { const res = await callGemini(prompt, userKey); const newName = res.replace(/["*]/g, "").trim(); const newPlan = { ...plan }; newPlan[activeDish.day][activeDish.meal] = newName; setPlan(newPlan); setActiveDish({...activeDish, name: newName, rawName: newName}); setModalTitle(newName); setModalAction("view"); } catch(e) { setModalContent("Error."); } setModalLoading(false); };
+
+
+            const newAllergens = useMemo(() => {
+                return newIngredients.filter(ing => COMMON_ALLERGENS.some(alg => ing.toLowerCase().includes(alg)));
+            }, [newIngredients]);
+
+
+            if (!plan) {
+                return (
+                    <div className={`p-6 max-w-lg mx-auto ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+                        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><Icon name="Chef" className="w-6 h-6 text-neon-purple"/> Meal Planner Setup</h2>
+                        <div className="space-y-6">
+                            {/* Setup Form */}
+                            <div><label className="block font-bold mb-2">Days to Plan: {days}</label><input type="range" min="1" max="7" value={days} onChange={(e)=>setDays(e.target.value)} className="w-full accent-neon-purple"/></div>
+                            <div><label className="block font-bold mb-2">Include Meals</label><div className="flex flex-wrap gap-2">{["Breakfast", "Lunch", "Dinner", "Snack 1", "Snack 2"].map(m => (<button key={m} onClick={() => setSelectedMeals(prev => prev.includes(m) ? prev.filter(i=>i!==m) : [...prev, m])} className={`px-3 py-1.5 rounded-full text-sm font-bold border transition-colors ${selectedMeals.includes(m) ? 'bg-neon-purple text-white border-neon-purple' : 'bg-transparent border-gray-400 text-gray-500'}`}>{m}</button>))}</div></div>
+                            
+                            <div className="space-y-3">
+                                <label className="block font-bold">New Food Introduction Mode</label>
+                                <div className={`p-3 rounded-xl border ${allergyTestMode ? 'bg-neon-green/10 border-neon-green' : 'bg-gray-50 dark:bg-dark-800 border-gray-200 dark:border-white/10'}`}>
+                                    <div className="flex items-center justify-between mb-1"><span className="font-bold text-sm flex items-center gap-2"><Icon name="Alert" className="w-4 h-4 text-neon-orange"/> Allergy Test Mode</span><div className="relative inline-block w-10 align-middle select-none"><input type="checkbox" checked={allergyTestMode} onChange={(e)=>setAllergyTestMode(e.target.checked)} className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/><label className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer ${allergyTestMode ? 'bg-neon-green' : 'bg-gray-300'}`}></label></div></div>
+                                    <p className="text-xs opacity-70">Repeats NEW ALLERGENS for 3 days. Normal foods are not repeated.</p>
+                                </div>
+                            </div>
+
+
+                            {!allergyTestMode && (<div><label className="block font-bold mb-2">New Ingredients to Try: {newIngredientsCount}</label><input type="number" min="0" max="10" value={newIngredientsCount} onChange={(e)=>setNewIngredientsCount(e.target.value)} className={`w-20 p-2 rounded-lg border ${theme === 'dark' ? 'bg-dark-700 border-gray-600' : 'bg-white border-gray-300'}`}/></div>)}
+                            
+                            {/* Must Include Multi-Select (Any food) */}
+                            <div>
+                                <label className="block font-bold mb-2">Must Include</label>
+                                <div className={`w-full p-2 rounded-lg border min-h-[42px] flex flex-wrap gap-2 ${theme === 'dark' ? 'bg-dark-700 border-gray-600' : 'bg-white border-gray-300'}`}>
+                                    {mustInclude.map(item => (<span key={item} className="bg-neon-blue/20 text-neon-blue text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">{item} <button onClick={() => setMustInclude(prev => prev.filter(i => i !== item))} className="hover:text-white">&times;</button></span>))}
+                                    <select className={`bg-transparent border-none outline-none text-sm flex-grow min-w-[150px] ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} onChange={(e) => { if (e.target.value && !mustInclude.includes(e.target.value)) { setMustInclude([...mustInclude, e.target.value]); } e.target.value = ""; }}>
+                                        <option value="">+ Add food</option>
+                                        {mustIncludeOptions.map(f => <option key={f} value={f}>{f}</option>)}
+                                    </select>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">Selecting an untried allergen here will auto-enable repeat mode.</p>
+                            </div>
+
+
+                            {/* New Manual Request Box */}
+                            <div>
+                                <label className="block font-bold mb-2">Special Requests</label>
+                                <textarea 
+                                    value={manualRequest}
+                                    onChange={(e) => setManualRequest(e.target.value)}
+                                    placeholder="e.g. 'No bananas on Tuesday', 'Make it Indian style', 'Include soup for dinner'"
+                                    className={`w-full p-3 rounded-xl border text-sm min-h-[80px] ${theme === 'dark' ? 'bg-dark-700 border-gray-600 text-white placeholder-gray-500' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'}`}
+                                ></textarea>
+                            </div>
+
+
+                            <button onClick={generatePlan} disabled={loading} className="w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r from-neon-purple to-neon-blue shadow-lg hover:opacity-90 disabled:opacity-50 transition-opacity">{loading ? "Chef Ved is thinking..." : "Generate Meal Plan"}</button>
+                        </div>
+                    </div>
+                );
+            }
+
+
+            return (
+                <div className={`p-4 pb-24 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-xl font-bold">Your Meal Plan</h2>
+                        <div className="flex gap-3">
+                             <button onClick={exportAsImage} className="text-sm font-bold text-neon-green flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neon-green/10 border border-neon-green/50 hover:bg-neon-green/20 transition-colors"><Icon name="Download" className="w-4 h-4"/> Save Image</button>
+                             <button onClick={() => setPlan(null)} className="text-sm text-neon-blue underline flex items-center">Start Over</button>
+                        </div>
+                    </div>
+                    
+                    {/* Hidden Print View for Export */}
+                    <PrintView ref={printRef} plan={plan} days={days} selectedMeals={selectedMeals} />
+
+
+                    {/* Displayed View */}
+                    <div className="overflow-x-auto pb-4">
+                         <div className="grid gap-2" style={{ gridTemplateColumns: `auto repeat(${days}, minmax(140px, 1fr))` }}>
+                            <div className="sticky left-0 z-10"></div>
+                            {Array.from({length: days}).map((_, i) => (<div key={i} className="font-bold text-center p-2 bg-neon-purple/10 rounded-lg text-neon-purple">Day {i+1}</div>))}
+                            {selectedMeals.map(meal => (
+                                <React.Fragment key={meal}>
+                                    <div className={`sticky left-0 z-10 p-2 font-bold text-xs uppercase tracking-wider flex items-center ${theme === 'dark' ? 'bg-dark-900' : 'bg-f3f4f6'}`}>{meal}</div>
+                                    {Array.from({length: days}).map((_, i) => {
+                                        const dayKey = `Day ${i+1}`;
+                                        const dish = plan[dayKey]?.[meal] || "-";
+                                        const isNew = isNewDish(dish);
+                                        const displayDish = getCleanDishName(dish);
+                                        return (
+                                            <div key={`${dayKey}-${meal}`} draggable onDragStart={(e) => handleDragStart(e, dayKey, meal)} onDrop={(e) => handleDrop(e, dayKey, meal)} onDragOver={handleDragOver} onClick={() => handleDishClick(displayDish, dayKey, meal)} 
+                                                className={`p-3 rounded-xl border border-dashed cursor-move transition-all text-sm min-h-[80px] flex flex-col items-center justify-center text-center relative group ${isNew ? 'bg-neon-teal/10 border-neon-teal' : (theme==='dark'?'bg-dark-800 border-gray-500/30':'bg-white border-gray-200 hover:border-neon-purple')}`}>
+                                                {isNew && <span className="absolute -top-2 -right-2 bg-neon-teal text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">NEW</span>}
+                                                {displayDish}
+                                            </div>
+                                        );
+                                    })}
+                                </React.Fragment>
+                            ))}
+                        </div>
+                    </div>
+
+
+                    {/* Notes and Warnings below grid */}
+                    {planNotes.length > 0 && (
+                        <div className={`mt-4 p-4 rounded-xl border ${theme === 'dark' ? 'bg-yellow-900/20 border-yellow-700' : 'bg-yellow-50 border-yellow-200'}`}>
+                             <h3 className={`font-bold text-sm ${theme === 'dark' ? 'text-yellow-500' : 'text-yellow-700'}`}>Notes & Adjustments</h3>
+                             <ul className="list-disc list-inside text-xs opacity-80">{planNotes.map((note, i) => <li key={i}>{note}</li>)}</ul>
+                        </div>
+                    )}
+
+
+                    {dishModalOpen && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                            <div className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] ${theme === 'dark' ? 'bg-dark-800' : 'bg-white'}`}>
+                                <div className="p-4 border-b border-gray-200 dark:border-white/10 flex justify-between items-center flex-shrink-0">
+                                    <h3 className="font-bold text-lg">{modalTitle}</h3>
+                                    <button onClick={() => setDishModalOpen(false)} className="text-2xl">&times;</button>
+                                </div>
+                                <div className="p-6 overflow-y-auto flex-grow">
+                                    {modalLoading ? (<div className="flex justify-center p-4"><div className="w-8 h-8 border-4 border-neon-purple border-t-transparent rounded-full animate-spin"></div></div>) : modalAction === 'modify' ? (
+                                        <form onSubmit={(e) => { e.preventDefault(); modifyDish(e.target.elements.instruction.value); }}>
+                                            <label className="block text-sm font-bold mb-2">How should we change this dish?</label>
+                                            <input name="instruction" placeholder="e.g. Remove dairy..." className={`w-full p-2 border rounded-lg mb-4 ${theme==='dark'?'bg-dark-700 border-gray-600':'bg-gray-50 border-gray-300'}`} autoFocus />
+                                            <button type="submit" className="w-full bg-neon-blue text-white font-bold py-2 rounded-lg">Update Dish</button>
+                                        </form>
+                                    ) : modalContent ? (<div className="prose dark:prose-invert" dangerouslySetInnerHTML={{ __html: modalContent }}></div>) : (
+                                        <div className="grid grid-cols-1 gap-3">
+                                            <button onClick={fetchRecipe} className="p-3 rounded-xl bg-neon-green/10 text-neon-green border border-neon-green/50 font-bold hover:bg-neon-green/20">📖 View Recipe</button>
+                                            <button onClick={() => setModalAction('modify')} className="p-3 rounded-xl bg-neon-blue/10 text-neon-blue border border-neon-blue/50 font-bold hover:bg-neon-blue/20">✏️ Modify Ingredients</button>
+                                            <button onClick={replaceDish} className="p-3 rounded-xl bg-neon-purple/10 text-neon-purple border border-neon-purple/50 font-bold hover:bg-neon-purple/20">🔄 Replace Dish</button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+
+        // ... (Rest of the component code: BottomNav, BabyFoodChecklist) ...
+        // --- Bottom Nav ---
+        const BottomNav = ({ activeTab, onSwitch }) => {
+            return (
+                <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-black/90 backdrop-blur-lg border-t dark:border-white/10 flex justify-around p-2 pb-safe">
+                    <button onClick={() => onSwitch('tracker')} className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-colors ${activeTab === 'tracker' ? 'text-neon-green bg-neon-green/10' : 'text-gray-400'}`}><Icon name="List" className="w-6 h-6" /><span className="text-[10px] font-bold">Tracker</span></button>
+                    <button onClick={() => onSwitch('planner')} className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-colors ${activeTab === 'planner' ? 'text-neon-purple bg-neon-purple/10' : 'text-gray-400'}`}><Icon name="Calendar" className="w-6 h-6" /><span className="text-[10px] font-bold">Meal Plan</span></button>
+                </div>
+            );
+        };
+
+
+        function BabyFoodChecklist() {
+          // ... (existing state)
+          const [checkedItems, setCheckedItems] = useState([]);
+          const [customFoods, setCustomFoods] = useState([]);
+          const [activeCategory, setActiveCategory] = useState("All");
+          const [searchQuery, setSearchQuery] = useState("");
+          const [filterMode, setFilterMode] = useState("All"); 
+          const [showConfetti, setShowConfetti] = useState(false);
+          const [expandedCategories, setExpandedCategories] = useState(Object.keys(INITIAL_FOOD_DATA).reduce((acc, cat) => ({...acc, [cat]: true}), {}));
+          const [theme, setTheme] = useState('light');
+          const [debugTime, setDebugTime] = useState(null); 
+          const [timeOfDay, setTimeOfDay] = useState('morning');
+          const [quickFilters, setQuickFilters] = useState({});
+          
+          const [aiModalOpen, setAiModalOpen] = useState(false);
+          const [aiLoading, setAiLoading] = useState(false);
+          const [aiContent, setAiContent] = useState("");
+          const [aiTitle, setAiTitle] = useState("");
+          const [aiError, setAiError] = useState(false);
+          
+          const [isRecipeMode, setIsRecipeMode] = useState(false);
+          const [isAllergenMode, setIsAllergenMode] = useState(false);
+          const [addModalOpen, setAddModalOpen] = useState(false);
+          const [settingsOpen, setSettingsOpen] = useState(false);
+          const [userApiKey, setUserApiKey] = useState("");
+
+
+          // New State for View Switching
+          const [currentView, setCurrentView] = useState('tracker');
+
+
+          // ... (existing hooks and functions: Merge Data, isAllergen, useEffects, toggleTheme, toggleItem, etc.)
+          const FOOD_DATA = useMemo(() => {
+              const merged = { ...INITIAL_FOOD_DATA };
+              Object.keys(merged).forEach(key => merged[key] = [...merged[key]]);
+              customFoods.forEach(food => {
+                  if (merged[food.category]) {
+                      if (!merged[food.category].includes(food.name)) {
+                          merged[food.category].push(food.name);
+                      }
+                  }
+              });
+              return merged;
+          }, [customFoods]);
+
+
+          const isAllergen = (foodName) => {
+              const customFood = customFoods.find(f => f.name === foodName);
+              if (customFood && customFood.hasOwnProperty('isAllergen')) return customFood.isAllergen;
+              const lowerName = foodName.toLowerCase();
+              return COMMON_ALLERGENS.some(allergen => lowerName.includes(allergen));
+          };
+
+
+          useEffect(() => {
+            const saved = localStorage.getItem('babyFoodChecklist_v1');
+            if (saved) { try { setCheckedItems(JSON.parse(saved)); } catch (e) { console.error("Failed to load progress", e); } }
+            const savedCustom = localStorage.getItem('babyFoodChecklist_custom');
+            if (savedCustom) { try { setCustomFoods(JSON.parse(savedCustom)); } catch (e) { console.error("Failed to load custom foods", e); } }
+            const savedTheme = localStorage.getItem('babyFoodChecklist_theme');
+            if (savedTheme) { setTheme(savedTheme); }
+            const savedKey = localStorage.getItem('babyFoodChecklist_apiKey');
+            if (savedKey) { setUserApiKey(savedKey); }
+          }, []);
+
+
+          useEffect(() => {
+                const hour = debugTime !== null ? debugTime : new Date().getHours();
+                if (hour >= 5 && hour < 11) setTimeOfDay('morning');
+                else if (hour >= 11 && hour < 17) setTimeOfDay('afternoon');
+                else if (hour >= 17 && hour < 21) setTimeOfDay('evening');
+                else setTimeOfDay('night');
+          }, [debugTime]);
+
+
+          useEffect(() => { localStorage.setItem('babyFoodChecklist_v1', JSON.stringify(checkedItems)); }, [checkedItems]);
+          useEffect(() => { localStorage.setItem('babyFoodChecklist_custom', JSON.stringify(customFoods)); }, [customFoods]);
+          useEffect(() => { document.body.className = theme === 'dark' ? 'dark-mode' : 'light-mode'; localStorage.setItem('babyFoodChecklist_theme', theme); }, [theme]);
+
+
+          const saveApiKey = (key) => { setUserApiKey(key); localStorage.setItem('babyFoodChecklist_apiKey', key); };
+          const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+          const toggleItem = (item) => {
+            let newChecked;
+            if (checkedItems.includes(item)) { newChecked = checkedItems.filter(i => i !== item); } else { newChecked = [...checkedItems, item]; setShowConfetti(true); setTimeout(() => setShowConfetti(false), 2000); }
+            setCheckedItems(newChecked);
+          };
+          const toggleCategoryExpand = (cat) => { setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] })); };
+          const toggleQuickFilter = (category) => { setQuickFilters(prev => { const isActive = prev[category]; return isActive ? {} : { [category]: true }; }); };
+          const handleAddCustomFood = (name, category, isAllergenConfirmed) => { setCustomFoods(prev => [...prev, { name, category, isAllergen: isAllergenConfirmed }]); };
+          const handleDeleteCustomFood = (foodName, e) => { e.stopPropagation(); if (window.confirm(`Delete custom food "${foodName}"?`)) { setCustomFoods(prev => prev.filter(f => f.name !== foodName)); setCheckedItems(prev => prev.filter(item => item !== foodName)); } };
+
+
+          const handleServingTip = async (foodName, e) => {
+              e.stopPropagation(); 
+              setAiTitle(`How to serve ${foodName}`);
+              setAiContent("");
+              setAiError(false);
+              setIsRecipeMode(false);
+              setIsAllergenMode(false);
+              setAiModalOpen(true);
+              setAiLoading(true);
+              const prompt = `You are a pediatric nutritionist. Explain how to safely serve '${foodName}' to a baby (6-12 months). Provide 2-3 brief tips (e.g. Texture, Preparation). Use HTML tags like <h3>, <ul>, <li>, <strong> for formatting. Do not use markdown. Keep it friendly and encouraging.`;
+              try { const response = await callGemini(prompt, userApiKey); setAiContent(response); } catch (err) { setAiError(true); }
+              setAiLoading(false);
+          };
+
+
+          const handleAllergenInfo = async (foodName, e) => {
+              e.stopPropagation(); 
+              setAiTitle(`Allergen Alert: ${foodName}`);
+              setAiContent("");
+              setAiError(false);
+              setIsRecipeMode(false);
+              setIsAllergenMode(true);
+              setAiModalOpen(true);
+              setAiLoading(true);
+              const prompt = `You are a pediatric allergy specialist. The food '${foodName}' is a known common allergen. 1. Briefly explain why it is an allergen. 2. How to introduce it SAFELY for the first time (e.g. "The Ladder" approach or small amounts). 3. What signs of reaction to look for (hives, breathing, etc). 4. Immediate steps if a mild reaction occurs. Use HTML tags <h3>, <p>, <ul>, <li>, <strong> for formatting. Do NOT use markdown. Keep tone serious but calm.`;
+              try { const response = await callGemini(prompt, userApiKey); setAiContent(response); } catch (err) { setAiError(true); }
+              setAiLoading(false);
+          };
+
+
+          // Existing Magic Recipe (kept for Tracker view FAB)
+          const handleMagicRecipe = async () => {
+              if (checkedItems.length < 2) { setAiTitle("Not enough foods yet!"); setAiContent("<p>Please check off at least 2 foods you've tried so Chef Ved can invent a recipe!</p>"); setIsRecipeMode(true); setIsAllergenMode(false); setAiModalOpen(true); return; }
+              setAiTitle("Chef Ved's Magic Recipe"); setAiContent(""); setAiError(false); setIsRecipeMode(true); setIsAllergenMode(false); setAiModalOpen(true); setAiLoading(true);
+              const shuffled = [...checkedItems].sort(() => 0.5 - Math.random());
+              const ingredients = shuffled.slice(0, 3).join(", ");
+              const prompt = `You are a creative baby chef. Create a simple, tasty baby food recipe using these ingredients: ${ingredients}. You can assume basic pantry staples (water, oil) are available. Give it a fun name. Use HTML tags <h3>, <p>, <ul>, <li>, <strong> for formatting. Do not use markdown.`;
+              try { const response = await callGemini(prompt, userApiKey); setAiContent(response); } catch (err) { setAiError(true); }
+              setAiLoading(false);
+          };
+
+
+          // Calculate counts for filters
+          const totalItems = Object.values(FOOD_DATA).flat().length;
+          const progress = Math.round((checkedItems.length / totalItems) * 100);
+
+
+          const filterItems = (items, categoryName) => {
+            const matchesSearch = items.filter(item => item.toLowerCase().includes(searchQuery.toLowerCase()));
+            const matchesStatus = matchesSearch.filter(item => {
+                if (filterMode === "All") return true;
+                if (filterMode === "Tried") return checkedItems.includes(item);
+                if (filterMode === "To Try") return !checkedItems.includes(item);
+                return true;
+            });
+            const activeFilterKey = Object.keys(quickFilters).find(k => quickFilters[k]);
+            if (activeFilterKey && categoryName !== activeFilterKey) return [];
+            return matchesStatus;
+          };
+          
+          // Get current formatted date
+          const getFormattedDate = () => {
+              const date = new Date();
+              const options = { weekday: 'long', month: 'short', day: 'numeric' };
+              return date.toLocaleDateString('en-US', options).toUpperCase();
+          };
+
+
+          // Render components inside main
+          const renderTracker = () => {
+              return (
+                  <div className="max-w-xl mx-auto px-4 -mt-6 relative z-30">
+                    <div className={`rounded-xl p-4 shadow-lg border mb-6 glass-panel transition-all ${theme === 'dark' ? 'bg-dark-800/80 border-white/10' : 'bg-white/80 border-white'}`}>
+                        <div className="flex flex-col gap-3">
+                             <div className="relative flex-grow group w-full">
+                                <div className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${theme === 'dark' ? 'text-gray-500 group-focus-within:text-white' : 'text-gray-400 group-focus-within:text-gray-600'}`}><Icon name="Search" className="w-4 h-4" /></div>
+                                <input type="text" placeholder="Search foods..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className={`w-full pl-10 pr-10 py-2.5 rounded-xl text-sm outline-none ring-1 ring-transparent transition-all ${searchBg}`} />
+                                <button onClick={() => setAddModalOpen(true)} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-neon-blue hover:bg-neon-blue/10 transition-colors" title="Add custom food"><Icon name="Plus" className="w-5 h-5" /></button>
+                              </div>
+                              <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+                                  <div className="flex gap-2">
+                                    {Object.keys(INITIAL_FOOD_DATA).map(cat => (
+                                        <button key={cat} onClick={() => toggleQuickFilter(cat)} className={`p-2 rounded-lg transition-all flex-shrink-0 ${quickFilters[cat] ? 'bg-neon-blue/20 text-neon-blue border-neon-blue/50 border' : (theme === 'dark' ? 'bg-dark-700 text-gray-400 hover:text-white' : 'bg-gray-100 text-gray-500 hover:text-gray-900')}`} title={cat}>{React.cloneElement(CATEGORY_ICONS[cat], { className: "w-5 h-5" })}</button>
+                                    ))}
+                                  </div>
+                                  <div className={`flex rounded-xl p-1 border transition-colors ${filterContainer}`}>
+                                    {['All', 'To Try', 'Tried'].map(mode => (<button key={mode} onClick={() => setFilterMode(mode)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${filterMode === mode ? filterActive : filterInactive}`}>{mode}</button>))}
+                                  </div>
+                              </div>
+                        </div>
+                    </div>
+                    <div className="space-y-4 pb-24">{Object.keys(FOOD_DATA).map(cat => renderCategory(cat))}</div>
+                    {Object.keys(FOOD_DATA).every(cat => filterItems(FOOD_DATA[cat], cat).length === 0) && (<div className="text-center py-20 opacity-50"><div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-500 ${theme === 'dark' ? 'bg-dark-700' : 'bg-gray-100'}`}><Icon name="Search" className="w-8 h-8" /></div><p className="text-gray-400 font-medium">No foods match your search.</p></div>)}
+                  </div>
+              );
+          };
+
+
+          const renderCategory = (categoryName) => {
+            const items = FOOD_DATA[categoryName];
+            const filteredItems = filterItems(items, categoryName);
+            const activeFilterKey = Object.keys(quickFilters).find(k => quickFilters[k]);
+            const isFiltering = searchQuery || filterMode !== "All" || activeFilterKey;
+            
+            if (filteredItems.length === 0 && isFiltering) return null;
+            
+            const isExpanded = expandedCategories[categoryName];
+            const categoryProgress = items.filter(i => checkedItems.includes(i)).length;
+            const isComplete = categoryProgress === items.length && items.length > 0;
+            const config = RING_CONFIG[categoryName];
+            const headerColorStyle = { color: `hsl(${config.hue}, ${config.sat}%, 50%)`, backgroundColor: `hsla(${config.hue}, ${config.sat}%, 50%, 0.1)` };
+            const cardBg = theme === 'dark' ? 'bg-dark-800 border-white/5 shadow-none' : 'bg-white border-gray-100 shadow-sm';
+            const hoverBg = theme === 'dark' ? 'active:bg-white/5' : 'active:bg-gray-50';
+
+
+            return (
+              <div key={categoryName} className={`mb-4 rounded-2xl overflow-hidden border transition-all duration-300 ${cardBg}`}>
+                <button onClick={() => toggleCategoryExpand(categoryName)} className={`w-full flex items-center justify-between p-4 transition-colors ${hoverBg}`}>
+                  <div className="flex items-center gap-4">
+                    <div className="p-2.5 rounded-xl transition-colors" style={headerColorStyle}>{React.cloneElement(CATEGORY_ICONS[categoryName], { className: "w-5 h-5" })}</div>
+                    <div className="text-left">
+                      <h3 className={`font-bold text-lg leading-tight transition-colors ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{categoryName}</h3>
+                      <span className="text-xs text-gray-400 font-medium tracking-wide">{categoryProgress} / {items.length} COMPLETED</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                     {isComplete && <div className="bg-neon-green/20 text-neon-green p-1.5 rounded-full"><Icon name="Check" className="w-3.5 h-3.5" /></div>}
+                     {isExpanded ? <Icon name="ChevronUp" className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} /> : <Icon name="ChevronDown" className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} />}
+                  </div>
+                </button>
+                
+                {isExpanded && (
+                  <div className="p-3 pt-0 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {filteredItems.map(item => {
+                      const isChecked = checkedItems.includes(item);
+                      const isCustom = customFoods.some(f => f.name === item);
+                      const isTriedMode = filterMode === 'Tried';
+                      const isAllergenFood = isAllergen(item);
+                      
+                      const btnBase = "group flex items-center justify-between p-3.5 rounded-xl border text-left transition-all duration-300";
+                      let btnState = "", iconState = "", textState = "";
+
+
+                      if (isChecked) {
+                          if (isTriedMode) {
+                              btnState = theme === 'dark' ? 'bg-neon-green/10 border-neon-green/30' : 'bg-green-50 border-green-200';
+                              textState = theme === 'dark' ? 'text-neon-green' : 'text-green-700';
+                              iconState = 'bg-gradient-to-br from-neon-green to-emerald-600 scale-110';
+                          } else {
+                              btnState = theme === 'dark' ? 'bg-dark-700 border-transparent opacity-50' : 'bg-gray-100 border-transparent opacity-60';
+                              textState = 'text-gray-400 line-through';
+                              iconState = 'bg-gradient-to-br from-neon-green to-emerald-600 scale-110';
+                          }
+                      } else {
+                          btnState = theme === 'dark' ? 'bg-dark-700/50 border-transparent hover:bg-dark-600' : 'bg-gray-50 border-transparent hover:bg-white hover:border-gray-200 hover:shadow-sm';
+                          textState = theme === 'dark' ? 'text-gray-200' : 'text-gray-700';
+                          iconState = theme === 'dark' ? 'border-2 border-gray-600 group-hover:border-gray-400' : 'border-2 border-gray-200 group-hover:border-gray-400 bg-white';
+                      }
+
+
+                      return (
+                        <div key={item} onClick={() => toggleItem(item)} className={`${btnBase} ${btnState} cursor-pointer`}>
+                          <div className="flex items-center gap-3">
+                              <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${iconState}`}>
+                                {isChecked && <Icon name="Check" className="w-3 h-3 text-black" strokeWidth={4} />}
+                              </div>
+                              <span className={`font-medium text-sm transition-colors ${textState}`}>{item}</span>
+                          </div>
+                          
+                          <div className="flex gap-1">
+                              {isAllergenFood && (
+                                  <button onClick={(e) => handleAllergenInfo(item, e)} className="p-1 px-2 text-[10px] font-bold text-red-600 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 rounded-lg transition-colors border border-red-200 dark:border-red-900" title="Potential Allergen">A</button>
+                              )}
+                              <button onClick={(e) => handleServingTip(item, e)} className="p-1.5 text-gray-400 hover:text-neon-blue hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full transition-colors" title="How to serve?"><Icon name="Info" className="w-4 h-4" /></button>
+                              {isCustom && (
+                                  <button onClick={(e) => handleDeleteCustomFood(item, e)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors" title="Delete Food"><Icon name="X" className="w-4 h-4" /></button>
+                              )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          };
+
+
+          const searchBg = theme === 'dark' ? 'bg-dark-700 text-white placeholder-gray-500 focus:ring-white/20' : 'bg-gray-100 text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-gray-300';
+          const filterActive = theme === 'dark' ? 'bg-dark-600 text-white' : 'bg-white text-gray-900 shadow-sm ring-1 ring-black/5';
+          const filterInactive = theme === 'dark' ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700';
+          const filterContainer = theme === 'dark' ? 'bg-dark-700 border-white/5' : 'bg-gray-100 border-transparent';
+
+
+          return (
+            <div className={`min-h-screen pb-24 font-sans selection:bg-neon-green selection:text-black transition-colors`}>
+              
+              <AIModal isOpen={aiModalOpen} onClose={() => setAiModalOpen(false)} title={aiTitle} content={aiContent} isLoading={aiLoading} isRecipe={isRecipeMode} isAllergen={isAllergenMode} error={aiError} />
+              
+              <AddFoodModal isOpen={addModalOpen} onClose={() => setAddModalOpen(false)} onAdd={handleAddCustomFood} initialName={searchQuery} existingFoods={Object.values(FOOD_DATA).flat()} userKey={userApiKey} />
+
+
+              <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} apiKey={userApiKey} onSaveKey={saveApiKey} onRestoreData={() => { window.location.reload(); }} />
+
+
+              {showConfetti && (
+                <>
+                  <Confetti />
+                  <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none">
+                     <div className={`backdrop-blur-md px-8 py-6 rounded-3xl shadow-2xl border flex flex-col items-center gap-3 animate-bounce-in ${theme === 'dark' ? 'bg-dark-800/90 border-white/10' : 'bg-white/90 border-white/20'}`}>
+                        <div className="text-neon-yellow bg-yellow-400/10 p-4 rounded-full shadow-[0_0_20px_currentColor]"><Icon name="Trophy" className="w-8 h-8" /></div>
+                        <div className="text-center"><h2 className={`font-bold text-xl ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Tasty!</h2><p className="text-gray-400 text-sm">{checkedItems.length} foods down!</p></div>
+                     </div>
+                  </div>
+                </>
+              )}
+
+
+              {/* INTEGRATED HEADER SECTION */}
+              <div className="relative overflow-hidden rounded-b-[2.5rem] shadow-xl z-20">
+                <SceneBackground timeOfDay={timeOfDay} />
+                <div className="relative z-10 w-full h-full bg-gradient-to-b from-black/10 to-black/5 pt-6 pb-8 px-4">
+                   <div className="max-w-xl mx-auto"> 
+                      <div className="flex items-center justify-between mb-6">
+                           <div className="flex items-center gap-2">
+                             <span className="text-xs font-bold text-white/90 bg-black/20 px-2 py-1 rounded-full backdrop-blur-sm">{getFormattedDate()}</span>
+                             <select onChange={(e) => setDebugTime(parseInt(e.target.value))} className="text-[10px] bg-black/20 border-0 rounded text-white/70 px-1 opacity-0 hover:opacity-100"><option value="">Auto</option><option value="8">Morn</option><option value="13">After</option><option value="18">Eve</option><option value="22">Night</option></select>
+                           </div>
+                           <div className="flex gap-2">
+                                <button onClick={() => setSettingsOpen(true)} className="p-2 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/30 transition-colors border border-white/20 shadow-sm" title="Settings"><Icon name="Gear" className="w-5 h-5" /></button>
+                               <button onClick={toggleTheme} className="p-2 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/30 transition-colors border border-white/20 shadow-sm">{theme === 'dark' ? <Icon name="Sun" className="w-5 h-5" /> : <Icon name="Moon" className="w-5 h-5" />}</button>
+                           </div>
+                      </div>
+                      
+                      {/* HEADER CONTENT SWITCHES BASED ON VIEW */}
+                      {currentView === 'tracker' ? (
+                          <>
+                              <div className="flex items-end justify-between mb-8">
+                                <h1 className="text-3xl font-black text-white drop-shadow-md leading-tight max-w-[70%]">Ved's first foods list</h1>
+                                <div className="text-right">
+                                     <div className="text-4xl font-black text-white drop-shadow-md leading-none">{checkedItems.length}</div>
+                                     <div className="text-[10px] font-bold text-white/80 tracking-widest mt-1">OF {totalItems}</div>
+                                </div>
+                              </div>
+                              <div className="relative h-2 w-full bg-black/20 rounded-full overflow-hidden mb-8 backdrop-blur-sm"><div className="absolute top-0 left-0 h-full w-full bg-white/90 shadow-[0_0_10px_rgba(255,255,255,0.5)]" style={{ width: `${progress}%`, transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} /></div>
+                              <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 mask-linear justify-start sm:justify-between">{Object.keys(FOOD_DATA).map(cat => { const total = FOOD_DATA[cat].length; const current = FOOD_DATA[cat].filter(i => checkedItems.includes(i)).length; return <CategoryRing key={cat} category={cat} progress={current} total={total} icon={CATEGORY_ICONS[cat]} theme={theme} />; })}</div>
+                          </>
+                      ) : (
+                          <div className="mb-4">
+                              <h1 className="text-3xl font-black text-white drop-shadow-md leading-tight">Chef Ved's Kitchen</h1>
+                              <p className="text-white/80 text-sm mt-1">Plan healthy meals for the week</p>
+                          </div>
+                      )}
+                   </div>
+                </div>
+              </div>
+
+
+              {/* MAIN CONTENT AREA SWITCH */}
+              {currentView === 'tracker' ? renderTracker() : <MealPlanner checkedItems={checkedItems} uncheckedItems={Object.values(FOOD_DATA).flat().filter(f => !checkedItems.includes(f))} userKey={userApiKey} theme={theme} onOpenSettings={() => setSettingsOpen(true)} allFoods={Object.values(FOOD_DATA).flat()} />}
+
+
+              {/* BOTTOM NAVIGATION */}
+              <BottomNav activeTab={currentView} onSwitch={setCurrentView} />
+
+
+            </div>
+          );
+        }
+
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<BabyFoodChecklist />);
+    </script>
+</body>
+</html>
